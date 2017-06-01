@@ -193,6 +193,11 @@ forecastCol = "red"
 if(exists("settings_graph_params_forecastCol"))
   forecastCol = settings_graph_params_forecastCol
 
+
+fittedCol = "green"
+if(exists("settings_graph_params_fittedCol"))
+  fittedCol = settings_graph_params_fittedCol
+
 #PBI_PARAM Transparency of scatterplot points
 #Type:numeric, Default:0.4, Range:[0,1], PossibleValues:NA, Remarks: NA
 transparency = 1
@@ -225,7 +230,11 @@ cexSub = 0.75
 if(exists("settings_info_params_textSize"))
   cexSub = as.numeric(settings_info_params_textSize)/12
 
-
+##PBI_PARAM Color of info text
+#Type:string, Default:"red", Range:NA, PossibleValues:"red","blue","green","black"
+infoTextCol = "gray50"
+if(exists("settings_info_params_infoTextCol"))
+  infoTextCol = settings_info_params_infoTextCol
 
 #PBI_PARAM Size of labels on axes
 #Type:numeric , Default:12, Range:NA, PossibleValues:[1,50], Remarks: NA
@@ -540,13 +549,13 @@ if(length(timeSeries)>=minPoints) {
   allTimes = as.POSIXlt(seq(from=parsed_dates[1], to = (parsed_dates[1]+interval*(length(parsed_dates)+forecastLength)), length.out = length(parsed_dates)+forecastLength))
   fFromTo = indexShowFromTo(showFromTo,actTimes, allTimes)
   myInclude = length(actTimes) - fFromTo[1]
-  myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) + 1
+  myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) 
   
-  if(myForecastLength == 0)
+  if(myForecastLength == 0)# need to forecast next day/week/etc
   {
     actTimes1 = allTimes[1:(length(actTimes)+1)]
     fFromTo = indexShowFromTo(showFromTo,actTimes1, allTimes)
-    myInclude = 1
+    myInclude = 0
     myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) + 1
   }
   
@@ -617,15 +626,18 @@ if(length(timeSeries)>=minPoints) {
      
    }
      
-     
-   myCumSum = sum(prediction$mean) + sum(dataset[fFromTo[1]:N,2])
+  tempVal = sum(dataset[fFromTo[1]:N,2])
+  if(is.na(tempVal))
+    tempVal = 0
+   myCumSum = sum(prediction$mean) + tempVal
+   
    
    
   if(showInfo && showInfoMethodTBATS)
     pbiInfo=paste(pbiInfo,"", prediction$method, ". ",sep="")
   
    if(showInfoCumSum)
-     pbiInfo=paste(pbiInfo, "Cumulative: ", format(myCumSum, digits=3, nsmall=2),". ", sep="")
+     pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=3, nsmall=2),". ", sep="")
    
    if(showInfoCriterion)
      pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=3, nsmall=2), ". ", sep="")
@@ -637,10 +649,12 @@ if(length(timeSeries)>=minPoints) {
   
   
   plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels, 
-                main = "", sub = pbiInfo, col.sub = "gray50", cex.sub = cexSub, xlab = labTime, ylab = labValue, xaxt = "n", include = myInclude)
+                main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub, xlab = labTime, ylab = labValue, xaxt = "n", include = myInclude)
   
-  if(1)
-  {
+  
+ 
+ 
+  
   NpF = myInclude + myForecastLength
  # freq = frequency(timeSeries)
   
@@ -663,8 +677,12 @@ if(length(timeSeries)>=minPoints) {
   
   correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
   axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
+ 
+ 
+  if(showInPlotFitted)
+  {
+    lines(prediction$fitted,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
   }
-  
   
   
   

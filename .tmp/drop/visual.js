@@ -202,6 +202,7 @@ var powerbi;
                         this.settings_graph_params = {
                             dataCol: "orange",
                             forecastCol: "red",
+                            fittedCol: "green",
                             percentile: 40,
                             weight: 10,
                             showFromTo: "all",
@@ -215,7 +216,8 @@ var powerbi;
                             textSize: 10,
                             showInfoMethodTBATS: false,
                             showInfoCumSum: false,
-                            showInfoCriterion: false
+                            showInfoCriterion: false,
+                            infoTextCol: "gray50"
                         };
                     }
                     Visual.prototype.update = function (options) {
@@ -237,6 +239,7 @@ var powerbi;
                         this.settings_graph_params = {
                             dataCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'dataCol', "orange"),
                             forecastCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'forecastCol', "red"),
+                            fittedCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'fittedCol', "green"),
                             percentile: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
                             weight: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
                             showFromTo: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
@@ -250,7 +253,8 @@ var powerbi;
                             textSize: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
                             showInfoCriterion: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoCriterion', false),
                             showInfoCumSum: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
-                            showInfoMethodTBATS: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false)
+                            showInfoMethodTBATS: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
+                            infoTextCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
                         };
                         var imageUrl = null;
                         if (dataView.scriptResult && dataView.scriptResult.payloadBase64) {
@@ -299,6 +303,7 @@ var powerbi;
                                     properties: {
                                         dataCol: this.settings_graph_params.dataCol,
                                         forecastCol: this.settings_graph_params.forecastCol,
+                                        fittedCol: this.settings_graph_params.fittedCol,
                                         percentile: this.settings_graph_params.percentile,
                                         weight: this.settings_graph_params.weight,
                                         showFromTo: this.settings_graph_params.showFromTo,
@@ -322,6 +327,7 @@ var powerbi;
                                     objectName: objectName,
                                     properties: {
                                         textSize: this.settings_info_params.textSize,
+                                        infoTextCol: this.settings_info_params.infoTextCol,
                                         showInfoCriterion: this.settings_info_params.showInfoCriterion,
                                         showInfoCumSum: this.settings_info_params.showInfoCumSum,
                                         showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS

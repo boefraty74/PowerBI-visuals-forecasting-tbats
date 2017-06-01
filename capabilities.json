@@ -219,6 +219,10 @@
               "displayName": "Forecast data color",
               "type": { "fill": { "solid": { "color": true }}}
             },
+              "fittedCol": {
+              "displayName": "Fitted data color",
+              "type": { "fill": { "solid": { "color": true }}}
+            },
             "percentile":{
             "displayName": "Opacity",
             "type": {
@@ -323,7 +327,11 @@
             "type": {
               "numeric": true
               }
-            }            
+            },
+            "infoTextCol": {
+              "displayName": "Font color",
+              "type": { "fill": { "solid": { "color": true }}}
+            }
         }
     }
 

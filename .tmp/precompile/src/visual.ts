@@ -40,6 +40,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
         show: boolean;
         dataCol: string;
         forecastCol: string;
+        fittedCol: string;
         percentile: number;
         weight: number;
         showFromTo: string;
@@ -54,6 +55,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
         showInfoCumSum: boolean;
         showInfoCriterion: boolean;
         textSize: number;
+        infoTextCol: string;
     }
 
 
@@ -92,6 +94,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                
                 dataCol: "orange",
                 forecastCol: "red",
+                fittedCol: "green",
                 percentile: 40,
                 weight: 10, 
                 showFromTo: "all", 
@@ -109,7 +112,8 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                 textSize: 10,
                 showInfoMethodTBATS: false,
                 showInfoCumSum: false,
-                showInfoCriterion: false
+                showInfoCriterion: false,
+                infoTextCol: "gray50"
             };
         }
 
@@ -137,6 +141,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
             this.settings_graph_params = <VisualGraphParams>{
                 dataCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'dataCol', "orange"),
                 forecastCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'forecastCol', "red"),
+                fittedCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'fittedCol', "green"),
                 percentile: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
                 weight: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
                  showFromTo: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
@@ -153,7 +158,8 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                 textSize: getValue<number>(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
                 showInfoCriterion: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCriterion', false),
                 showInfoCumSum: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
-                showInfoMethodTBATS: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false)
+                showInfoMethodTBATS: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
+                infoTextCol: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
             }
 
             let imageUrl: string = null;
@@ -210,6 +216,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                         properties: {
                             dataCol: this.settings_graph_params.dataCol,
                             forecastCol: this.settings_graph_params.forecastCol,
+                            fittedCol: this.settings_graph_params.fittedCol,
                             percentile: this.settings_graph_params.percentile,
                             weight: this.settings_graph_params.weight,
                             showFromTo: this.settings_graph_params.showFromTo,
@@ -242,6 +249,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                             objectName: objectName,
                             properties: {
                                 textSize: this.settings_info_params.textSize,
+                                 infoTextCol: this.settings_info_params.infoTextCol,
                                 showInfoCriterion: this.settings_info_params.showInfoCriterion,
                                 showInfoCumSum: this.settings_info_params.showInfoCumSum,
                                 showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS
