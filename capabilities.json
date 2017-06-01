@@ -1,0 +1,334 @@
+{
+  "dataRoles": [
+    {
+      "displayName": "Date",
+      "description": "Equally spaced date values",
+      "kind": "Grouping",
+      "name": "Date"
+    },
+    {
+      "displayName": "Value",
+      "description": "Numeric variable",
+      "kind": "Measure",
+      "name": "Value"
+    }
+  ],
+  "dataViewMappings": [
+    {
+      "conditions": [
+          { "Date": { "max": 1 }, "Value": { "max": 1 } }
+      ],
+      "scriptResult": {
+        "dataInput": {
+          "table": {
+            "rows": {
+              "select": [
+                { "for": { "in": "Date" } },
+                { "for": { "in": "Value" } }
+              ],
+              "dataReductionAlgorithm": {
+                "top": { }
+              }
+            }
+          }
+        },
+        "script": {
+          "scriptProviderDefault": "R",
+          "scriptOutputType": "png",
+          "source": {
+            "objectName": "rcv_script",
+            "propertyName": "source"
+          },
+          "provider": {
+            "objectName": "rcv_script",
+            "propertyName": "provider"
+          }
+        }
+      }
+    }
+  ],
+  "objects": {
+    "rcv_script": {
+      "properties": {
+        "provider": {
+          "type": { "text": true }
+        },
+        "source": {
+          "type": {
+            "scripting": { "source": true }
+          }
+        }
+      }
+    },
+    "settings_forecastPlot_params": {
+      "displayName": "Forecasting settings",
+      "description": "Basic decomposition models are:  1. Additive: x[t] = Trend + Seasonal + Random, 2. Multiplicative:  x[t] = Trend * Seasonal * Random. Hybrid models are allowed. Any forbiden model combination will be replaced by `Automatic`",
+      "properties": {
+      
+        "forecastLength": { 
+          "displayName": "Forecast length",
+          "description": "Number of data points to predict", 
+          "type": { "numeric": true } 
+          },
+          "freq1": { 
+          "displayName": "Seasonal period #1",
+          "description": "Number of data points in smaller season period", 
+          "type": { "numeric": true } 
+          },
+           "freq2": { 
+          "displayName": "Seasonal period #2",
+          "description": "Number of data points in larger season period", 
+          "type": { "numeric": true } 
+          }
+      }
+    }, 
+     "settings_conf_params":{
+        "displayName": "Confidence intervals",
+        "properties": {
+        "confInterval1": {
+          "displayName": "Confidence level",
+          "description": "Select first confidence interval",
+          "type": {
+            "enumeration": [
+              {
+                "displayName": "0",
+                "value": "0"
+              },
+              {
+                "displayName": "0.2",
+                "value": "0.2"
+              },
+              {
+                "displayName": "0.4",
+                "value": "0.4"
+              },
+              {
+                "displayName": "0.5",
+                "value": "0.5"
+              },
+              {
+                "displayName": "0.75",
+                "value": "0.75"
+              },
+              {
+                "displayName": "0.8",
+                "value": "0.8"
+              },
+              {
+                "displayName": "0.9",
+                "value": "0.9"
+              },
+              {
+                "displayName": "0.95",
+                "value": "0.95"
+              },
+              {
+                "displayName": "0.975",
+                "value": "0.975"
+              },
+              {
+                "displayName": "0.98",
+                "value": "0.98"
+              },
+              {
+                "displayName": "0.99",
+                "value": "0.99"
+              },
+              {
+                "displayName": "0.995",
+                "value": "0.995"
+              },
+              {
+                "displayName": "0.999",
+                "value": "0.999"
+              }
+            ]
+          }
+        },
+        "confInterval2": {
+          "displayName": "Confidence level #2",
+          "description": "Select additional confidence interval",
+          "type": {
+            "enumeration": [
+              {
+                "displayName": "0",
+                "value": "0"
+              },
+              {
+                "displayName": "0.2",
+                "value": "0.2"
+              },
+              {
+                "displayName": "0.4",
+                "value": "0.4"
+              },
+              {
+                "displayName": "0.5",
+                "value": "0.5"
+              },
+              {
+                "displayName": "0.75",
+                "value": "0.75"
+              },
+              {
+                "displayName": "0.8",
+                "value": "0.8"
+              },
+              {
+                "displayName": "0.9",
+                "value": "0.9"
+              },
+              {
+                "displayName": "0.95",
+                "value": "0.95"
+              },
+              {
+                "displayName": "0.975",
+                "value": "0.975"
+              },
+              {
+                "displayName": "0.98",
+                "value": "0.98"
+              },
+              {
+                "displayName": "0.99",
+                "value": "0.99"
+              },
+              {
+                "displayName": "0.995",
+                "value": "0.995"
+              },
+              {
+                "displayName": "0.999",
+                "value": "0.999"
+              }
+            ]
+          }
+        }
+      }
+    },
+     "settings_graph_params":{
+        "displayName": "Graphical parameters",
+        "properties": {
+          
+            "dataCol": {
+              "displayName": "History data color",
+              "type": { "fill": { "solid": { "color": true }}}
+            }, 
+              "forecastCol": {
+              "displayName": "Forecast data color",
+              "type": { "fill": { "solid": { "color": true }}}
+            },
+            "percentile":{
+            "displayName": "Opacity",
+            "type": {
+              "numeric": true
+            }
+            },
+            "weight":{
+            "displayName": "Line width",
+            "type": {
+              "numeric": true
+            }
+            },
+             "showFromTo": {
+          "displayName": "Show subset of dates",
+          "description": "Show subset of dates",
+          "type": {
+            "enumeration": [
+              {
+                "displayName": "all",
+                "value": "all"
+              },
+              {
+                "displayName": "last hour",
+                "value": "hour"
+              },
+              {
+                "displayName": "last day",
+                "value": "mday"
+              },
+              {
+                "displayName": "last week",
+                "value": "week"
+              },
+              {
+                "displayName": "last month",
+                "value": "mon"
+              },
+              {
+                "displayName": "last year",
+                "value": "year"
+              }
+            ]
+          }
+        },
+            "showInPlotFitted":{
+            "displayName": "Show fitted values",
+            "description": "Show fitted values",
+            "type": {
+              "bool": true
+            }
+          }
+
+        }
+    },
+     "settings_additional_params":{
+        "displayName": "Advanced parameters",
+        "properties": {
+        
+           "algModeFast":{
+            "displayName": "Fast execution mode",
+			      "description": "Relatively fast non-accurate execution mode",
+            "type": {
+              "bool": true
+              }
+            }, 
+             "valuesNonNegative":{
+            "displayName": "Positive data values",
+			      "description": "Set negative prediction to zero",
+            "type": {
+              "bool": true
+              }
+            }                  
+        }
+    },
+     "settings_info_params":{
+        "displayName": "Info parameters",
+        "properties": {
+        
+            "showInfoMethodTBATS":{
+            "displayName": "Show TBATS method selected",
+            "type": {
+              "bool": true
+            }
+          },
+            "showInfoCumSum":{
+            "displayName": "Show cumulative value",
+            "description": "Show cumulative value inside shown period (actual + predicted)",
+            "type": {
+              "bool": true
+            }
+          },
+          "showInfoCriterion":{
+            "displayName": "Show information criterion",
+            "description": "Show information criterion of the found model",
+            "type": {
+              "bool": true
+            }
+          },
+           "textSize":{
+            "displayName": "Font size",
+			      "description": "Font size used to show information",
+            "type": {
+              "numeric": true
+              }
+            }            
+        }
+    }
+
+
+
+  },
+  "suppressDefaultTitle": true
+}
