@@ -44,6 +44,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
         percentile: number;
         weight: number;
         showFromTo: string;
+        refPointShift: number;
         showInPlotFitted: boolean;
     }
     interface VisualAdditionalParams {
@@ -98,6 +99,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                 percentile: 40,
                 weight: 10, 
                 showFromTo: "all", 
+                refPointShift: 0,
                 showInPlotFitted: false
 
 
@@ -145,6 +147,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                 percentile: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
                 weight: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
                  showFromTo: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
+                 refPointShift: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
                   showInPlotFitted: getValue<boolean>(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false)
 
             }
@@ -220,6 +223,7 @@ module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_
                             percentile: this.settings_graph_params.percentile,
                             weight: this.settings_graph_params.weight,
                             showFromTo: this.settings_graph_params.showFromTo,
+                            refPointShift: this.settings_graph_params.refPointShift,
                             showInPlotFitted: this.settings_graph_params.showInPlotFitted
 
                         },

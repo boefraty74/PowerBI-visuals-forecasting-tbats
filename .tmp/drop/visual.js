@@ -206,6 +206,7 @@ var powerbi;
                             percentile: 40,
                             weight: 10,
                             showFromTo: "all",
+                            refPointShift: 0,
                             showInPlotFitted: false
                         };
                         this.settings_additional_params = {
@@ -243,6 +244,7 @@ var powerbi;
                             percentile: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
                             weight: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
                             showFromTo: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
+                            refPointShift: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
                             showInPlotFitted: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false)
                         };
                         this.settings_additional_params = {
@@ -307,6 +309,7 @@ var powerbi;
                                         percentile: this.settings_graph_params.percentile,
                                         weight: this.settings_graph_params.weight,
                                         showFromTo: this.settings_graph_params.showFromTo,
+                                        refPointShift: this.settings_graph_params.refPointShift,
                                         showInPlotFitted: this.settings_graph_params.showInPlotFitted
                                     },
                                     selector: null

@@ -141,6 +141,10 @@ possibleFromTo = c('all','hour','mday','week','mon','year')
 if(!(showFromTo %in% possibleFromTo))
   showFromTo = possibleFromTo[1]
 
+refPointShift = 0;
+if(exists("settings_graph_params_refPointShift"))
+  refPointShift = settings_graph_params_refPointShift
+
 showInPlotFitted = FALSE
 if(exists("settings_graph_params_showInPlotFitted"))
   showInPlotFitted = settings_graph_params_showInPlotFitted
@@ -416,8 +420,19 @@ joinFreq = function (f1 ,f2 = NULL)
 }
 
 
-indexShowFromTo = function(showFromTo,datesActual, datesAll)
+indexShowFromTo = function(showFromTo,datesActual, datesAll, refPointShift = 0)
 {
+  
+  secShift = -refPointShift*60*60
+  # datesActual$hour = datesActual$hour +  refPointShift
+  # datesAll$hour = datesAll$hour + refPointShift
+  
+  datesActual = datesActual +  secShift
+  datesAll = datesAll + secShift
+  
+  datesActual = as.POSIXlt(datesActual)
+  datesAll = as.POSIXlt(datesAll)
+  
   Lall = length(datesAll)
   Lactual = length(datesActual)
   
@@ -546,17 +561,23 @@ if(length(timeSeries)>=minPoints) {
   
   # compute part of dates to show
   actTimes = as.POSIXlt(seq(from=parsed_dates[1], to = parsed_dates[length(parsed_dates)], length.out = length(parsed_dates)))
-  allTimes = as.POSIXlt(seq(from=parsed_dates[1], to = (parsed_dates[1]+interval*(length(parsed_dates)+forecastLength)), length.out = length(parsed_dates)+forecastLength))
-  fFromTo = indexShowFromTo(showFromTo,actTimes, allTimes)
-  myInclude = length(actTimes) - fFromTo[1]
+  allTimes = as.POSIXlt(seq(from=parsed_dates[1], to = (parsed_dates[length(parsed_dates)]+interval*(forecastLength)), length.out = length(parsed_dates)+forecastLength))
+  fFromTo = indexShowFromTo(showFromTo,actTimes, allTimes, refPointShift)
+  myInclude = length(actTimes) - fFromTo[1] + 1
   myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) 
   
   if(myForecastLength == 0)# need to forecast next day/week/etc
   {
-    actTimes1 = allTimes[1:(length(actTimes)+1)]
-    fFromTo = indexShowFromTo(showFromTo,actTimes1, allTimes)
+    myForecastLength = myInclude
+    fFromTo = c(length(actTimes)+1,length(actTimes)+ myForecastLength)
     myInclude = 0
-    myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) + 1
+    myForecastLength = min(forecastLength,myForecastLength) 
+    
+    
+    #actTimes1 = allTimes[1:(length(actTimes)+1)]
+    #fFromTo = indexShowFromTo(showFromTo,actTimes1, allTimes, refPointShift)
+    #myInclude = 0
+    #myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) + 1
   }
   
   numPo = myInclude + myForecastLength
@@ -574,7 +595,7 @@ if(length(timeSeries)>=minPoints) {
    l <- N # length(dataset[,2]) #how many intervals in the data
    a <- myInclude #the number of rows to include from actuals
    f <- myForecastLength #number of periods to forecast 
-   y <- msts(dataset[,2], seasonal.periods=c(d, w), start= (-N+myInclude)/freq2 )#+d/w)
+   y <- msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude)/freq2 )#+d/w)
    
   
    timeSeries=msts(data = dataset[,2], seasonal.periods=freqs, start= -l/w +a/w)
