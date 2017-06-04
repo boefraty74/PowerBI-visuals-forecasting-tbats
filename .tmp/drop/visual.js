@@ -191,7 +191,7 @@ var powerbi;
                         this.imageElement.className = 'rcv_autoScaleImage';
                         this.imageDiv.appendChild(this.imageElement);
                         this.settings_forecastPlot_params = {
-                            forecastLength: 10,
+                            forecastLength: 500,
                             freq1: 1,
                             freq2: 1
                         };
@@ -207,7 +207,7 @@ var powerbi;
                             weight: 10,
                             showFromTo: "all",
                             refPointShift: 0,
-                            showInPlotFitted: false
+                            showInPlotFitted: false,
                         };
                         this.settings_additional_params = {
                             valuesNonNegative: false,
@@ -220,6 +220,12 @@ var powerbi;
                             showInfoCriterion: false,
                             infoTextCol: "gray50"
                         };
+                        this.settings_axes_params = {
+                            showScientificY: false,
+                            textSize: 12,
+                            labelsTextCol: "black",
+                            userFormatX: "auto"
+                        };
                     }
                     Visual.prototype.update = function (options) {
                         var dataViews = options.dataViews;
@@ -229,7 +235,7 @@ var powerbi;
                         if (!dataView || !dataView.metadata)
                             return;
                         this.settings_forecastPlot_params = {
-                            forecastLength: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_forecastPlot_params', 'forecastLength', 10),
+                            forecastLength: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_forecastPlot_params', 'forecastLength', 500),
                             freq1: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq1', 1),
                             freq2: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq2', 1)
                         };
@@ -245,7 +251,7 @@ var powerbi;
                             weight: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
                             showFromTo: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
                             refPointShift: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
-                            showInPlotFitted: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false)
+                            showInPlotFitted: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false),
                         };
                         this.settings_additional_params = {
                             algModeFast: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_additional_params', 'algModeFast', false),
@@ -257,6 +263,12 @@ var powerbi;
                             showInfoCumSum: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
                             showInfoMethodTBATS: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
                             infoTextCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
+                        };
+                        this.settings_axes_params = {
+                            showScientificY: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
+                            textSize: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_axes_params', 'textSize', 12),
+                            labelsTextCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_axes_params', 'labelsTextCol', "black"),
+                            userFormatX: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_axes_params', 'userFormatX', "auto")
                         };
                         var imageUrl = null;
                         if (dataView.scriptResult && dataView.scriptResult.payloadBase64) {
@@ -303,17 +315,36 @@ var powerbi;
                                 objectEnumeration.push({
                                     objectName: objectName,
                                     properties: {
-                                        dataCol: this.settings_graph_params.dataCol,
-                                        forecastCol: this.settings_graph_params.forecastCol,
-                                        fittedCol: this.settings_graph_params.fittedCol,
                                         percentile: this.settings_graph_params.percentile,
                                         weight: this.settings_graph_params.weight,
-                                        showFromTo: this.settings_graph_params.showFromTo,
-                                        refPointShift: this.settings_graph_params.refPointShift,
+                                        dataCol: this.settings_graph_params.dataCol,
+                                        forecastCol: this.settings_graph_params.forecastCol,
                                         showInPlotFitted: this.settings_graph_params.showInPlotFitted
-                                    },
-                                    selector: null
+                                    }
                                 });
+                                if (this.settings_graph_params.showInPlotFitted) {
+                                    objectEnumeration.push({
+                                        objectName: objectName,
+                                        properties: {
+                                            fittedCol: this.settings_graph_params.fittedCol,
+                                        }
+                                    });
+                                }
+                                objectEnumeration.push({
+                                    objectName: objectName,
+                                    properties: {
+                                        showFromTo: this.settings_graph_params.showFromTo,
+                                    }
+                                });
+                                if (this.settings_graph_params.showFromTo != "all") {
+                                    objectEnumeration.push({
+                                        objectName: objectName,
+                                        properties: {
+                                            refPointShift: this.settings_graph_params.refPointShift //conditioned
+                                        },
+                                        selector: null
+                                    });
+                                }
                                 break;
                             case 'settings_additional_params':
                                 objectEnumeration.push({
@@ -334,6 +365,18 @@ var powerbi;
                                         showInfoCriterion: this.settings_info_params.showInfoCriterion,
                                         showInfoCumSum: this.settings_info_params.showInfoCumSum,
                                         showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS
+                                    },
+                                    selector: null
+                                });
+                                break;
+                            case 'settings_axes_params':
+                                objectEnumeration.push({
+                                    objectName: objectName,
+                                    properties: {
+                                        labelsTextCol: this.settings_axes_params.labelsTextCol,
+                                        textSize: this.settings_axes_params.textSize,
+                                        userFormatX: this.settings_axes_params.userFormatX,
+                                        showScientificY: this.settings_axes_params.showScientificY
                                     },
                                     selector: null
                                 });

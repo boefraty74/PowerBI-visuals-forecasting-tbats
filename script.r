@@ -17,13 +17,13 @@
 #
 # LAST UPDATE: 08/01/2017
 #
-# VERSION: 1.0.2
+# VERSION: 1.0.0
 #
-# R VERSION TESTED: 3.2.2
+# R VERSION TESTED: 3.3.4, MRO 3.3.2
 # 
 # AUTHOR: pbicvsupport@microsoft.com
 #
-# REFERENCES: http://www.exponentialsmoothing.net/
+# REFERENCES: https://robjhyndman.com/papers/ComplexSeasonality.pdf
 
 
 fileRda = "C:/Users/boefraty/projects/PBI/R/tempData.Rda"
@@ -43,8 +43,6 @@ Sys.setlocale("LC_ALL","English") # Internationalization
 ##PBI_PARAM: Should warnings text be displayed?
 #Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
 showWarnings=TRUE
-
-
 
 
 ##PBI_PARAM: Show cumulative value inside shown period (actual + predicted)?
@@ -70,7 +68,7 @@ if(exists("settings_info_params_showInfoCriterion"))
 showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
 ##PBI_PARAM: Forecast length
-#Type:integer, Default:NULL, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
+#Type:integer, Default:500, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
 forecastLength=500
 if(exists("settings_forecastPlot_params_forecastLength"))
 {
@@ -101,10 +99,6 @@ if(exists("settings_forecastPlot_params_freq2"))
     freq2 = 1
   freq2 = round(max(min(freq2,1e+6),1))
 }
-# freq1 = 96 
-# freq2 = 672 
-
-
 
 
 confInterval1 = 0.5
@@ -159,8 +153,23 @@ if(exists("settings_additional_params_algModeFast"))
   algModeFast = settings_additional_params_algModeFast
 
 
-userDateFormat = "auto" # 
+userFormatX = "auto" # 
+if(exists("settings_axes_params_userFormatX"))
+  userFormatX = settings_axes_params_userFormatX
 
+
+showScientificY = FALSE
+if(exists("settings_axes_params_showScientificY"))
+  showScientificY = settings_axes_params_showScientificY
+
+
+labelsTextCol = "black"
+if(exists("settings_axes_params_labelsTextCol"))
+  labelsTextCol = settings_axes_params_labelsTextCol
+
+labelsTextSize = 1.2
+if(exists("settings_axes_params_textSize"))
+  labelsTextSize = as.numeric(settings_axes_params_textSize)/12
 
 
 ###############Library Declarations###############
@@ -411,7 +420,7 @@ joinFreq = function (f1 ,f2 = NULL)
   if(is.null(f2) || is.na(f2) || f2 < 1)
     f2 = NULL
   
-  f = unique(c(f1,f2))
+  f = sort(unique(c(f1,f2)))
   if(is.null(f) || is.na(f) || f < 1)
     f = 1
   
@@ -582,8 +591,8 @@ if(length(timeSeries)>=minPoints) {
   
   numPo = myInclude + myForecastLength
   
-   d <- freq1 #daily seasonality
-   w <- freq2 #weekly seasonality
+  # d <- freq1 #daily seasonality
+  # w <- freq2 #weekly seasonality
    
    startC <- 1/freq2 #starting point for axis
    finishC <- numPo/freq2 #end point for axis
@@ -592,14 +601,15 @@ if(length(timeSeries)>=minPoints) {
    freqs = joinFreq(freq1,freq2)
    
    #calculate how many periods to forecast assuming the first row starts a new day
-   l <- N # length(dataset[,2]) #how many intervals in the data
-   a <- myInclude #the number of rows to include from actuals
-   f <- myForecastLength #number of periods to forecast 
-   y <- msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude)/freq2 )#+d/w)
+   #l <- N # length(dataset[,2]) #how many intervals in the data
+   #a <- myInclude #the number of rows to include from actuals
+   #f <- myForecastLength #number of periods to forecast 
+   
+   timeSeries = msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude )/max(freqs) )#
    
   
-   timeSeries=msts(data = dataset[,2], seasonal.periods=freqs, start= -l/w +a/w)
-   timeSeries = y
+  # timeSeries=msts(data = dataset[,2], seasonal.periods=freqs, start= -N/freq2 +a/freq2)
+  # timeSeries = y
    
 
    
@@ -663,29 +673,35 @@ if(length(timeSeries)>=minPoints) {
    if(showInfoCriterion)
      pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=3, nsmall=2), ". ", sep="")
   
-  labTime = cutStr2Show(labTime, strCex =1.1, isH = TRUE)
-  labValue = cutStr2Show(labValue, strCex =1.1, isH = FALSE)
-  
- 
-  
-  
-  plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels, 
-                main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub, xlab = labTime, ylab = labValue, xaxt = "n", include = myInclude)
-  
-  
- 
- 
+  labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE)
+  labValue = cutStr2Show(labValue, strCex = labelsTextSize, isH = FALSE)
+  pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE,maxChar = 5, partAvailable = 0.9)
   
   NpF = myInclude + myForecastLength
- # freq = frequency(timeSeries)
   
+  xLim1 = 0 - 1/max(freqs)
+  xLim2 = (NpF-1)/max(freqs)
+  
+  #par(cex.lab=1.7)
+  par(oma = c(0,0,0,0))
+  par(mar = c(7,6,1,2))
+  
+  plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
+                 main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
+                xlim = c(xLim1,xLim2))
+ 
+ 
+ 
+
   
   #format  x_with_f
   numTicks = FindTicksNum(NpF,max(freqs)) # find based on plot size
   numTicks = min(numTicks, NpF)
   
-  fromDate = parsed_dates[length(parsed_dates) - myInclude ]
-  toDate =  parsed_dates[1]+interval*(length(parsed_dates)+myForecastLength - 1)
+  # fromDate = parsed_dates[length(parsed_dates) - myInclude ]
+  # toDate =  parsed_dates[1]+interval*(length(parsed_dates)+myForecastLength - 1)
+  fromDate = allTimes[fFromTo[1]]
+  toDate = allTimes[fFromTo[2]]
   
  # x_with_f = as.POSIXlt(seq(from=fromDate, to = toDate, length.out = numTicks))
   x_with_f_exist = as.POSIXlt(seq(from=fromDate, to = toDate, by = interval))
@@ -694,11 +710,23 @@ if(length(timeSeries)>=minPoints) {
   
   #TODO: find closest x_with_f_exist in x_with_f
   
-  x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs))
+  if(userFormatX=="auto")
+    userFormatX = NULL;
+
+  x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
   correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
   axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
  
+  yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
+  
+ 
+ 
+  title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
+  title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
+  
+  axis(2,at=pretty(yyy),labels=format(pretty(yyy),big.mark=",", scientific = showScientificY),las = !showScientificY)
+  
  
   if(showInPlotFitted)
   {

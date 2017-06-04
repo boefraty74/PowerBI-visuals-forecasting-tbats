@@ -32,8 +32,8 @@ module powerbi.extensibility.visual {
         freq2: number;
     }
 
-    interface VisualSettingsConfParams {     
-       confInterval1: string;
+    interface VisualSettingsConfParams {
+        confInterval1: string;
         confInterval2: string;
     }
     interface VisualGraphParams {
@@ -58,6 +58,12 @@ module powerbi.extensibility.visual {
         textSize: number;
         infoTextCol: string;
     }
+    interface VisualAxesParams {
+        showScientificY: boolean;
+        textSize: number;
+        labelsTextCol: string;
+        userFormatX: string;
+    }
 
 
     export class Visual implements IVisual {
@@ -69,6 +75,7 @@ module powerbi.extensibility.visual {
         private settings_graph_params: VisualGraphParams;
         private settings_additional_params: VisualAdditionalParams;
         private settings_info_params: VisualInfoParams;
+        private settings_axes_params: VisualAxesParams;
 
         public constructor(options: VisualConstructorOptions) {
             this.imageDiv = document.createElement('div');
@@ -81,7 +88,7 @@ module powerbi.extensibility.visual {
             this.imageDiv.appendChild(this.imageElement);
 
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
-                forecastLength: 10,
+                forecastLength: 500,
                 freq1: 1,
                 freq2: 1
             };
@@ -92,30 +99,36 @@ module powerbi.extensibility.visual {
             };
 
             this.settings_graph_params = <VisualGraphParams>{
-               
+
                 dataCol: "orange",
                 forecastCol: "red",
                 fittedCol: "green",
                 percentile: 40,
-                weight: 10, 
-                showFromTo: "all", 
+                weight: 10,
+                showFromTo: "all",
                 refPointShift: 0,
-                showInPlotFitted: false
+                showInPlotFitted: false,
 
 
             };
 
-            this.settings_additional_params = <VisualAdditionalParams>{   
+            this.settings_additional_params = <VisualAdditionalParams>{
                 valuesNonNegative: false,
                 algModeFast: false
             };
 
-            this.settings_info_params = <VisualInfoParams>{   
+            this.settings_info_params = <VisualInfoParams>{
                 textSize: 10,
                 showInfoMethodTBATS: false,
                 showInfoCumSum: false,
                 showInfoCriterion: false,
                 infoTextCol: "gray50"
+            };
+            this.settings_axes_params = <VisualAxesParams>{
+                showScientificY: false,
+                textSize: 12,
+                labelsTextCol: "black",
+                userFormatX: "auto"
             };
         }
 
@@ -129,9 +142,9 @@ module powerbi.extensibility.visual {
                 return;
 
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
-                forecastLength: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'forecastLength', 10),
-                 freq1: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq1', 1),
-                  freq2: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq2', 1)
+                forecastLength: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'forecastLength', 500),
+                freq1: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq1', 1),
+                freq2: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq2', 1)
             };
 
 
@@ -146,23 +159,30 @@ module powerbi.extensibility.visual {
                 fittedCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'fittedCol', "green"),
                 percentile: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
                 weight: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
-                 showFromTo: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
-                 refPointShift: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
-                  showInPlotFitted: getValue<boolean>(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false)
+                showFromTo: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
+                refPointShift: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
+                showInPlotFitted: getValue<boolean>(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false),
+
 
             }
             this.settings_additional_params = <VisualAdditionalParams>{
                 algModeFast: getValue<boolean>(dataView.metadata.objects, 'settings_additional_params', 'algModeFast', false),
                 valuesNonNegative: getValue<boolean>(dataView.metadata.objects, 'settings_additional_params', 'valuesNonNegative', false),
-               
+
             }
-             this.settings_info_params = <VisualInfoParams>{
-               
+            this.settings_info_params = <VisualInfoParams>{
+
                 textSize: getValue<number>(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
                 showInfoCriterion: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCriterion', false),
                 showInfoCumSum: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
                 showInfoMethodTBATS: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
                 infoTextCol: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
+            }
+            this.settings_axes_params = <VisualAxesParams>{
+                showScientificY: getValue<boolean>(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
+                textSize: getValue<number>(dataView.metadata.objects, 'settings_axes_params', 'textSize', 12),
+                labelsTextCol: getValue<string>(dataView.metadata.objects, 'settings_axes_params', 'labelsTextCol', "black"),
+                userFormatX: getValue<string>(dataView.metadata.objects, 'settings_axes_params', 'userFormatX', "auto")
             }
 
             let imageUrl: string = null;
@@ -190,13 +210,13 @@ module powerbi.extensibility.visual {
 
             switch (objectName) {
                 case 'settings_forecastPlot_params':
-                    
+
                     objectEnumeration.push({
                         objectName: objectName,
                         properties: {
-                            forecastLength: Math.round(inMinMax(this.settings_forecastPlot_params.forecastLength,1,1000000)),
-                             freq1: Math.round(inMinMax(this.settings_forecastPlot_params.freq1,1,1000000)),
-                              freq2: Math.round(inMinMax(this.settings_forecastPlot_params.freq2,1,1000000))
+                            forecastLength: Math.round(inMinMax(this.settings_forecastPlot_params.forecastLength, 1, 1000000)),
+                            freq1: Math.round(inMinMax(this.settings_forecastPlot_params.freq1, 1, 1000000)),
+                            freq2: Math.round(inMinMax(this.settings_forecastPlot_params.freq2, 1, 1000000))
                         },
                         selector: null
                     });
@@ -217,50 +237,83 @@ module powerbi.extensibility.visual {
                     objectEnumeration.push({
                         objectName: objectName,
                         properties: {
-                            dataCol: this.settings_graph_params.dataCol,
-                            forecastCol: this.settings_graph_params.forecastCol,
-                            fittedCol: this.settings_graph_params.fittedCol,
                             percentile: this.settings_graph_params.percentile,
                             weight: this.settings_graph_params.weight,
-                            showFromTo: this.settings_graph_params.showFromTo,
-                            refPointShift: this.settings_graph_params.refPointShift,
+                            dataCol: this.settings_graph_params.dataCol,
+                            forecastCol: this.settings_graph_params.forecastCol,
                             showInPlotFitted: this.settings_graph_params.showInPlotFitted
+                        }
+                    });
+                    if (this.settings_graph_params.showInPlotFitted) {
+                        objectEnumeration.push({
+                            objectName: objectName,
+                            properties: {
+                                fittedCol: this.settings_graph_params.fittedCol,//conditioned
+                            }
+                        });
+                    }
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            showFromTo: this.settings_graph_params.showFromTo,
+                        }
+                    });
+                    if (this.settings_graph_params.showFromTo != "all") {
+                        objectEnumeration.push({
+                            objectName: objectName,
+                            properties: {
+                                refPointShift: this.settings_graph_params.refPointShift//conditioned
+                            },
+                            selector: null
+                        });
+                    }
+                    break;
+
+                case 'settings_additional_params':
+
+                    objectEnumeration.push({
+
+                        objectName: objectName,
+                        properties: {
+                            valuesNonNegative: this.settings_additional_params.valuesNonNegative,
+                            algModeFast: this.settings_additional_params.algModeFast,
 
                         },
                         selector: null
                     });
+
                     break;
 
-                case 'settings_additional_params':
-                   
-                        objectEnumeration.push({
+                case 'settings_info_params':
 
-                            objectName: objectName,
-                            properties: {
-                                valuesNonNegative: this.settings_additional_params.valuesNonNegative,
-                                algModeFast: this.settings_additional_params.algModeFast,
-                               
-                            },
-                            selector: null
-                        });
-                   
+                    objectEnumeration.push({
+
+                        objectName: objectName,
+                        properties: {
+                            textSize: this.settings_info_params.textSize,
+                            infoTextCol: this.settings_info_params.infoTextCol,
+                            showInfoCriterion: this.settings_info_params.showInfoCriterion,
+                            showInfoCumSum: this.settings_info_params.showInfoCumSum,
+                            showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS
+                        },
+                        selector: null
+                    });
+
                     break;
 
-                    case 'settings_info_params':
-                   
-                        objectEnumeration.push({
+                case 'settings_axes_params':
 
-                            objectName: objectName,
-                            properties: {
-                                textSize: this.settings_info_params.textSize,
-                                 infoTextCol: this.settings_info_params.infoTextCol,
-                                showInfoCriterion: this.settings_info_params.showInfoCriterion,
-                                showInfoCumSum: this.settings_info_params.showInfoCumSum,
-                                showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS
-                            },
-                            selector: null
-                        });
-                   
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            labelsTextCol: this.settings_axes_params.labelsTextCol,
+                            textSize: this.settings_axes_params.textSize,
+                            userFormatX: this.settings_axes_params.userFormatX,
+                            showScientificY: this.settings_axes_params.showScientificY
+                        },
+                        selector: null
+                    });
+
                     break;
             };
 
