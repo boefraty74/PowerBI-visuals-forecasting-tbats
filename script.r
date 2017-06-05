@@ -13,9 +13,9 @@
 #
 # WARNINGS:   
 #
-# CREATION DATE: 24/7/2016
+# CREATION DATE: 06/06/2017
 #
-# LAST UPDATE: 08/01/2017
+# LAST UPDATE: 06/06/2017
 #
 # VERSION: 1.0.0
 #
@@ -40,10 +40,6 @@ Sys.setlocale("LC_ALL","English") # Internationalization
 
 ############ User Parameters #########
 
-##PBI_PARAM: Should warnings text be displayed?
-#Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
-showWarnings=TRUE
-
 
 ##PBI_PARAM: Show cumulative value inside shown period (actual + predicted)?
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
@@ -65,7 +61,6 @@ if(exists("settings_info_params_showInfoCriterion"))
   showInfoCriterion = settings_info_params_showInfoCriterion
 
 
-showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
 ##PBI_PARAM: Forecast length
 #Type:integer, Default:500, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
@@ -79,7 +74,7 @@ if(exists("settings_forecastPlot_params_forecastLength"))
 }
 
 ##PBI_PARAM: Number of data points in smaller season period
-#Type:integer, Default:NULL, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
+#Type:integer, Default:1, Range:NA, PossibleValues:NA, 
 freq1=1
 if(exists("settings_forecastPlot_params_freq1"))
 {
@@ -90,7 +85,7 @@ if(exists("settings_forecastPlot_params_freq1"))
 }
 
 ##PBI_PARAM: Number of data points in larger season period
-#Type:integer, Default:NULL, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
+#Type:integer, Default:1, Range:NA, PossibleValues:NA, 
 freq2=1
 if(exists("settings_forecastPlot_params_freq2"))
 {
@@ -100,7 +95,8 @@ if(exists("settings_forecastPlot_params_freq2"))
   freq2 = round(max(min(freq2,1e+6),1))
 }
 
-
+##PBI_PARAM: Confidence level
+#Type:number, Default:0.5, Range:[0,1], PossibleValues:NA, 
 confInterval1 = 0.5
 if (exists("settings_conf_params_confInterval1")) 
 { 
@@ -108,6 +104,9 @@ if (exists("settings_conf_params_confInterval1"))
   if(is.na(confInterval1))
     confInterval1 = 0.5
 }
+
+##PBI_PARAM: Confidence level
+#Type:number, Default:0.5, Range:[0,1], PossibleValues:NA, 
 confInterval2 = 0.995
 if (exists("settings_conf_params_confInterval2")) 
 { 
@@ -126,7 +125,11 @@ if(confInterval1>confInterval2)
 lowerConfInterval = confInterval1
 upperConfInterval = confInterval2
 
-showFromTo = "mday"# 
+
+
+##PBI_PARAM: Show period
+#Type:string, Default:"all", Range:NA, PossibleValues:('all','hour','mday','week','mon','year') 
+showFromTo = "all"# 
 if(exists("settings_graph_params_showFromTo"))
   showFromTo = settings_graph_params_showFromTo
 
@@ -135,38 +138,52 @@ possibleFromTo = c('all','hour','mday','week','mon','year')
 if(!(showFromTo %in% possibleFromTo))
   showFromTo = possibleFromTo[1]
 
-refPointShift = 0;
+
+
+##PBI_PARAM: Shift period (for example 24 to start week at monday)
+#Type:number, Default:0, Range:NA, PossibleValues:NA 
+refPointShift = 0
 if(exists("settings_graph_params_refPointShift"))
   refPointShift = settings_graph_params_refPointShift
 
+##PBI_PARAM: Show fitted 
+#Type:bool, Default:"F", Range:NA, PossibleValues:NA
 showInPlotFitted = FALSE
 if(exists("settings_graph_params_showInPlotFitted"))
   showInPlotFitted = settings_graph_params_showInPlotFitted
 
-
+##PBI_PARAM: Show fitted 
+#Type:bool, Default:"F", Range:NA, PossibleValues:NA
 valuesNonNegative = FALSE
 if(exists("settings_additional_params_valuesNonNegative"))
   valuesNonNegative = settings_additional_params_valuesNonNegative
 
+##PBI_PARAM: fast algo?
+#Type:bool, Default:"F", Range:NA, PossibleValues:NA
 algModeFast = FALSE
 if(exists("settings_additional_params_algModeFast"))
   algModeFast = settings_additional_params_algModeFast
 
-
+##PBI_PARAM: Enables user to force certain type of X-ticks formats
+#Type:string, Default:"auto", Range:NA, PossibleValues:
 userFormatX = "auto" # 
 if(exists("settings_axes_params_userFormatX"))
   userFormatX = settings_axes_params_userFormatX
 
-
+##PBI_PARAM: Y axis numbers format
+#Type:bool, Default:"F", Range:NA, PossibleValues:NA
 showScientificY = FALSE
 if(exists("settings_axes_params_showScientificY"))
   showScientificY = settings_axes_params_showScientificY
 
-
+##PBI_PARAM: Y axis label col
+#Type:string, Default:"black", Range:NA, PossibleValues:NA
 labelsTextCol = "black"
 if(exists("settings_axes_params_labelsTextCol"))
   labelsTextCol = settings_axes_params_labelsTextCol
 
+##PBI_PARAM: labels text size
+#Type:number, Default:1.2, Range:[8,50]/12, PossibleValues:NA
 labelsTextSize = 1.2
 if(exists("settings_axes_params_textSize"))
   labelsTextSize = as.numeric(settings_axes_params_textSize)/12
@@ -180,7 +197,6 @@ libraryRequireInstall = function(packageName, ...)
     warning(paste("*** The package: '", packageName, "' was not installed ***",sep=""))
 }
 
-#ets
 libraryRequireInstall("graphics")
 libraryRequireInstall("scales")
 libraryRequireInstall("forecast")
@@ -221,15 +237,7 @@ if(exists("settings_graph_params_percentile"))
 #Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
 fillConfidenceLevels=TRUE
 
-#PBI_PARAM damping
-#Type:logical, Default: NULL, Remarks: NULL selects damped or undamped trend depending on which fits better
-damped = NULL
-if(exists("settings_forecastPlot_params_dampingType"))
-{
-  damped = as.logical(settings_forecastPlot_params_dampingType)
-  if(is.na(damped))
-    damped=NULL
-}
+
 
 #PBI_PARAM Size of points on the plot
 #Type:numeric, Default: 1 , Range:[0.1,5], PossibleValues:NA, Remarks: NA
@@ -249,9 +257,6 @@ infoTextCol = "gray50"
 if(exists("settings_info_params_infoTextCol"))
   infoTextCol = settings_info_params_infoTextCol
 
-#PBI_PARAM Size of labels on axes
-#Type:numeric , Default:12, Range:NA, PossibleValues:[1,50], Remarks: NA
-sizeLabel = 12
 
 #PBI_PARAM Size of warnings font
 #Type:numeric , Default:cexSub*12, Range:NA, PossibleValues:[1,50], Remarks: NA
@@ -260,9 +265,12 @@ sizeWarn = cexSub*12
 #PBI_PARAM Size of ticks on axes 
 sizeTicks = 8
 
-#PBI_PARAM opacity of conf interval color
-transparencyConfInterval = 0.3 
 
+##PBI_PARAM: Should warnings text be displayed?
+#Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
+showWarnings = TRUE
+
+showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
 
 ###############Internal functions definitions#################
@@ -447,8 +455,8 @@ indexShowFromTo = function(showFromTo,datesActual, datesAll, refPointShift = 0)
   
   if(showFromTo == "all")
   {
-  frto = c(1,Lall)
-  return(frto)
+    frto = c(1,Lall)
+    return(frto)
   }
   
   if(showFromTo == "hour")
@@ -528,7 +536,7 @@ if(!exists("Date") || !exists("Value"))
   # dataset = dataset[-nrow(dataset),]
   # dataset = dataset[-nrow(dataset),]
   # dataset = dataset[-nrow(dataset),]
-  
+  dataset[,2] = as.numeric(dataset[,2])
   N=nrow(dataset)
   
   if(N==0 && exists("Date") && nrow(Date)>0 &&  exists("Value")){
@@ -566,8 +574,6 @@ pbiInfo = NULL
 
 if(length(timeSeries)>=minPoints) {
   
-
-  
   # compute part of dates to show
   actTimes = as.POSIXlt(seq(from=parsed_dates[1], to = parsed_dates[length(parsed_dates)], length.out = length(parsed_dates)))
   allTimes = as.POSIXlt(seq(from=parsed_dates[1], to = (parsed_dates[length(parsed_dates)]+interval*(forecastLength)), length.out = length(parsed_dates)+forecastLength))
@@ -581,165 +587,105 @@ if(length(timeSeries)>=minPoints) {
     fFromTo = c(length(actTimes)+1,length(actTimes)+ myForecastLength)
     myInclude = 0
     myForecastLength = min(forecastLength,myForecastLength) 
-    
-    
-    #actTimes1 = allTimes[1:(length(actTimes)+1)]
-    #fFromTo = indexShowFromTo(showFromTo,actTimes1, allTimes, refPointShift)
-    #myInclude = 0
-    #myForecastLength = min(forecastLength,fFromTo[2] - length(actTimes)) + 1
   }
   
-  numPo = myInclude + myForecastLength
   
-  # d <- freq1 #daily seasonality
-  # w <- freq2 #weekly seasonality
-   
-   startC <- 1/freq2 #starting point for axis
-   finishC <- numPo/freq2 #end point for axis
-   
-   
-   freqs = joinFreq(freq1,freq2)
-   
-   #calculate how many periods to forecast assuming the first row starts a new day
-   #l <- N # length(dataset[,2]) #how many intervals in the data
-   #a <- myInclude #the number of rows to include from actuals
-   #f <- myForecastLength #number of periods to forecast 
-   
-   timeSeries = msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude )/max(freqs) )#
-   
+  freqs = joinFreq(freq1,freq2)
+  timeSeries = msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude )/max(freqs) )#
   
-  # timeSeries=msts(data = dataset[,2], seasonal.periods=freqs, start= -N/freq2 +a/freq2)
-  # timeSeries = y
-   
-
-   
-   if(algModeFast)
-     fit <- tbats(timeSeries, use.box.cox = FALSE, use.trend = FALSE, use.damped.trend = FALSE,
-                  use.arma.errors = FALSE, max.p= 2, max.q = 2,
-                  max.P = 1, max.Q = 1, max.order= 3, max.d = 1, max.D = 0 )
-    else
-      fit <- tbats(timeSeries) 
-   
-   # fit <- tbats(timeSeries, use.box.cox=FALSE, use.trend= TRUE, use.damped.trend = FALSE,
-   #              use.arma.errors=TRUE, use.parallel= TRUE,
-   #              num.cores= NULL, bc.lower=0, bc.upper=1, biasadj=FALSE)
-   # 
-   
-   if(lowerConfInterval==0)
-     lowerConfInterval = NULL; 
-   
+  if(algModeFast)
+    fit <- tbats(timeSeries, use.box.cox = FALSE, use.trend = FALSE, use.damped.trend = FALSE,
+                 use.arma.errors = FALSE, max.p= 2, max.q = 2,
+                 max.P = 1, max.Q = 1, max.order= 3, max.d = 1, max.D = 0 )
+  else
+    fit <- tbats(timeSeries) 
+  
+  #TODO: add user mode with all tbats params 
+  
+  
+  if(lowerConfInterval==0)
+    lowerConfInterval = NULL; 
+  
   if (is.null(forecastLength))
     prediction = forecast(fit, level=c(lowerConfInterval,upperConfInterval))
   else
     prediction = forecast(fit, level=c(lowerConfInterval,upperConfInterval), h=myForecastLength)
   
-  # lastValue = tail(prediction$x,1)
-  # 
-  # prediction$mean=ts(c(lastValue,prediction$mean), 
-  #                    frequency = frequency(prediction$mean), 
-  #                    end=end(prediction$mean))
-  # 
-  # prediction$upper=ts(rbind(c(lastValue,lastValue),prediction$upper), 
-  #                     frequency = frequency(prediction$upper), 
-  #                     end=end(prediction$upper))
-  # 
-  # prediction$lower=ts(rbind(c(lastValue,lastValue),prediction$lower), 
-  #                     frequency = frequency(prediction$lower), 
-  #                     end=end(prediction$lower))
+  if(valuesNonNegative)
+  {
+    prediction$mean[prediction$mean < 0] = 0
+    prediction$upper[prediction$upper<0] = 0
+    prediction$lower[prediction$lower<0] = 0
+    prediction$fitted[prediction$fitted<0] = 0
+  }
   
-   
-   if(valuesNonNegative)
-   {
-     prediction$mean[prediction$mean < 0] = 0
-     prediction$upper[prediction$upper<0] = 0
-     prediction$lower[prediction$lower<0] = 0
-     prediction$fitted[prediction$fitted<0] = 0
-     
-   }
-     
+  #calculate cumulative forecast
   tempVal = sum(dataset[fFromTo[1]:N,2])
   if(is.na(tempVal))
     tempVal = 0
-   myCumSum = sum(prediction$mean) + tempVal
-   
-   
-   
+  myCumSum = sum(prediction$mean) + tempVal
+  
+  
+  
   if(showInfo && showInfoMethodTBATS)
     pbiInfo=paste(pbiInfo,"", prediction$method, ". ",sep="")
   
-   if(showInfoCumSum)
-     pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=3, nsmall=2),". ", sep="")
-   
-   if(showInfoCriterion)
-     pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=3, nsmall=2), ". ", sep="")
+  if(showInfoCumSum)
+    pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall=2, scientific = TRUE),". ", sep="")
   
+  if(showInfoCriterion)
+    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall=2, scientific = TRUE), ". ", sep="")
+  
+  #axes labels
   labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE)
   labValue = cutStr2Show(labValue, strCex = labelsTextSize, isH = FALSE)
   pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE,maxChar = 5, partAvailable = 0.9)
   
   NpF = myInclude + myForecastLength
   
+  #xlim
   xLim1 = 0 - 1/max(freqs)
   xLim2 = (NpF-1)/max(freqs)
   
-  #par(cex.lab=1.7)
-  par(oma = c(0,0,0,0))
-  par(mar = c(7,6,1,2))
+  #par(oma = c(0,0,0,0))
+  par(mar = c(5+showInfo,6 + (1-showScientificY) ,1,2))
   
   plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
-                 main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
+                main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
                 xlim = c(xLim1,xLim2))
- 
- 
- 
-
+  
   
   #format  x_with_f
   numTicks = FindTicksNum(NpF,max(freqs)) # find based on plot size
   numTicks = min(numTicks, NpF)
   
-  # fromDate = parsed_dates[length(parsed_dates) - myInclude ]
-  # toDate =  parsed_dates[1]+interval*(length(parsed_dates)+myForecastLength - 1)
   fromDate = allTimes[fFromTo[1]]
   toDate = allTimes[fFromTo[2]]
   
- # x_with_f = as.POSIXlt(seq(from=fromDate, to = toDate, length.out = numTicks))
   x_with_f_exist = as.POSIXlt(seq(from=fromDate, to = toDate, by = interval))
   iii = unique(round(seq(from = 1, to = length(x_with_f_exist), length.out = numTicks)))
   x_with_f = x_with_f_exist[iii]
   
-  #TODO: find closest x_with_f_exist in x_with_f
-  
   if(userFormatX=="auto")
     userFormatX = NULL;
-
+  
   x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
   correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
   axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
- 
+  
   yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
   
- 
- 
   title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
   title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
   
-  axis(2,at=pretty(yyy),labels=format(pretty(yyy),big.mark=",", scientific = showScientificY),las = !showScientificY)
+  axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
   
- 
+  
   if(showInPlotFitted)
   {
     lines(prediction$fitted,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
   }
-  
-  
-  
-  
-  
-  
-  
-  
   
 } else{ #empty plot
   plot.new()
@@ -750,5 +696,3 @@ if(length(timeSeries)>=minPoints) {
 #add warning as subtitle
 if(showWarnings)
   title(main=NULL, sub=pbiWarning,outer=FALSE, col.sub = "gray50", cex.sub=cexSub)
-
-#remove("dataset")
