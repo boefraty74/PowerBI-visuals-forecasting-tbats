@@ -475,7 +475,31 @@
             "infoTextCol": {
               "displayName": "Font color",
               "type": { "fill": { "solid": { "color": true }}}
-            }
+            },
+             "numDigitsInfo": {
+          "displayName": "Number of digits",
+          "description": "Number of digits to the right of the decimal point",
+          "type": {
+            "enumeration": [
+              {
+                "displayName": "0",
+                "value": "0"
+              },
+              {
+                "displayName": "1",
+                "value": "1"
+              },
+              {
+                "displayName": "2",
+                "value": "2"
+              },
+              {
+                "displayName": "3",
+                "value": "3"
+              }
+            ]
+          }
+        }
         }
     }
 

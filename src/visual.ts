@@ -57,6 +57,7 @@ module powerbi.extensibility.visual {
         showInfoCriterion: boolean;
         textSize: number;
         infoTextCol: string;
+        numDigitsInfo: string;
     }
     interface VisualAxesParams {
         showScientificY: boolean;
@@ -122,7 +123,8 @@ module powerbi.extensibility.visual {
                 showInfoMethodTBATS: false,
                 showInfoCumSum: false,
                 showInfoCriterion: false,
-                infoTextCol: "gray50"
+                infoTextCol: "gray50",
+                numDigitsInfo: "0"
             };
             this.settings_axes_params = <VisualAxesParams>{
                 showScientificY: false,
@@ -177,6 +179,7 @@ module powerbi.extensibility.visual {
                 showInfoCumSum: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
                 showInfoMethodTBATS: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
                 infoTextCol: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
+                numDigitsInfo: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'numDigitsInfo', "0"),
             }
             this.settings_axes_params = <VisualAxesParams>{
                 showScientificY: getValue<boolean>(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
@@ -294,7 +297,8 @@ module powerbi.extensibility.visual {
                             infoTextCol: this.settings_info_params.infoTextCol,
                             showInfoCriterion: this.settings_info_params.showInfoCriterion,
                             showInfoCumSum: this.settings_info_params.showInfoCumSum,
-                            showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS
+                            showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS,
+                            numDigitsInfo: this.settings_info_params.numDigitsInfo
                         },
                         selector: null
                     });

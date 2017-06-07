@@ -189,6 +189,7 @@ if(exists("settings_axes_params_textSize"))
   labelsTextSize = as.numeric(settings_axes_params_textSize)/12
 
 
+
 ###############Library Declarations###############
 
 libraryRequireInstall = function(packageName, ...)
@@ -251,6 +252,11 @@ cexSub = 0.75
 if(exists("settings_info_params_textSize"))
   cexSub = as.numeric(settings_info_params_textSize)/12
 
+
+numDigitsInfo = 0
+if(exists("settings_info_params_numDigitsInfo"))
+  numDigitsInfo = as.numeric(settings_info_params_numDigitsInfo)
+
 ##PBI_PARAM Color of info text
 #Type:string, Default:"red", Range:NA, PossibleValues:"red","blue","green","black"
 infoTextCol = "gray50"
@@ -272,6 +278,7 @@ showWarnings = TRUE
 
 showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
+useParallel = FALSE
 
 ###############Internal functions definitions#################
 
@@ -596,9 +603,9 @@ if(length(timeSeries)>=minPoints) {
   if(algModeFast)
     fit <- tbats(timeSeries, use.box.cox = FALSE, use.trend = FALSE, use.damped.trend = FALSE,
                  use.arma.errors = FALSE, max.p= 2, max.q = 2,
-                 max.P = 1, max.Q = 1, max.order= 3, max.d = 1, max.D = 0 )
+                 max.P = 1, max.Q = 1, max.order= 3, max.d = 1, max.D = 0, use.parallel = useParallel )
   else
-    fit <- tbats(timeSeries) 
+    fit <- tbats(timeSeries, use.parallel = useParallel) 
   
   #TODO: add user mode with all tbats params 
   
@@ -631,10 +638,10 @@ if(length(timeSeries)>=minPoints) {
     pbiInfo=paste(pbiInfo,"", prediction$method, ". ",sep="")
   
   if(showInfoCumSum)
-    pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall=2, scientific = TRUE),". ", sep="")
+    pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","),". ", sep="")
   
   if(showInfoCriterion)
-    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall=2, scientific = TRUE), ". ", sep="")
+    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","), ". ", sep="")
   
   #axes labels
   labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE)
@@ -648,7 +655,7 @@ if(length(timeSeries)>=minPoints) {
   xLim2 = (NpF-1)/max(freqs)
   
   #par(oma = c(0,0,0,0))
-  par(mar = c(5+showInfo,6 + (1-showScientificY) ,1,2))
+  par(mar = c(5+showInfo,6 + (1 - showScientificY) , 1, 2))
   
   plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
                 main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
@@ -684,7 +691,8 @@ if(length(timeSeries)>=minPoints) {
   
   if(showInPlotFitted)
   {
-    lines(prediction$fitted,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
+    pTemp =window(prediction$fitted, start = 0)
+    lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
   }
   
 } else{ #empty plot
