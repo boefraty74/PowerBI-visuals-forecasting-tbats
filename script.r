@@ -300,6 +300,7 @@ transparencyConfInterval = 0.3
 ###############Library Declarations###############
 
 source('./r_files/utils.r')
+source('./r_files/flatten_HTML.r')
 
 ###############Internal functions definitions#################
 
@@ -543,42 +544,26 @@ if(length(timeSeries)>=minPoints) {
                       panel.border = element_blank())
   
   
-  print(p1a)
-  
-  
-  
-  
-  
-  
-  
-  #plot 
-  # plot(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
-  #      main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
-  #      xlim = c(xLim1,xLim2))
-  # 
-  # if(showInPlotFitted)
-  # {
-  #   pTemp =window(prediction$fitted, start = 0)
-  #   lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
-  # }
-  # 
-  # axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
-  # 
-  # title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
-  # title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
-  # 
-  # axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
-  
-  
+ 
   
   
   
 } else{ #empty plot
-  plot.new()
+  
+  #empty plot
   showWarnings = TRUE
-  pbiWarning<-paste(pbiWarning, "Not enough data points", sep="\n")
+  pbiWarning1  = cutStr2Show("Not enough data points", strCex = sizeWarn/6, partAvailable = 0.85)
+  pbiWarning<-paste(pbiWarning, pbiWarning1 , sep="<br>")
+  
+}
+#add warning as subtitle (or upper title since plotly has bug)
+if(showWarnings && !is.null(pbiWarning))
+{
+  p1a = ggplot() + labs (title = pbiWarning, caption = NULL) + theme_bw() +
+    theme(plot.title  = element_text(hjust = 0.5, size = sizeWarn), 
+          axis.title=element_text(size =  sizeLabel),
+          axis.text=element_text(size =  sizeTicks),
+          panel.border = element_blank())
 }
 
-#add warning as subtitle
-# if(showWarnings)
-#   title(main=NULL, sub=pbiWarning,outer=FALSE, col.sub = "gray50", cex.sub=cexSub)
+print(p1a)
