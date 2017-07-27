@@ -657,7 +657,7 @@ if(length(timeSeries)>=minPoints) {
   #par(oma = c(0,0,0,0))
   par(mar = c(5+showInfo,6 + (1 - showScientificY) , 1, 2))
   
-  plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
+  plot(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
                 main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
                 xlim = c(xLim1,xLim2))
   
