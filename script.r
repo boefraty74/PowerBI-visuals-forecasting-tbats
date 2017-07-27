@@ -461,25 +461,142 @@ if(length(timeSeries)>=minPoints) {
   yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
   
   
-  #plot 
-  plot(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
-       main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
-       xlim = c(xLim1,xLim2))
+  
+  
+  # ----data for plot 
+  
+ # fromDate = allTimes[fFromTo[1]]
+#  toDate = allTimes[fFromTo[2]]
+  
+ # x_with_f_exist = as.POSIXlt(seq(from=fromDate, to = toDate, by = interval))
+ # iii = unique(round(seq(from = 1, to = length(x_with_f_exist), length.out = numTicks)))
+#  x_with_f = x_with_f_exist[iii]
+  
+#  if(userFormatX=="auto")
+#    userFormatX = NULL;
+  
+#  x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
+  
+  
+  lastValue = tail(prediction$x,1)
+  
+  prediction$mean=ts(c(lastValue,prediction$mean), 
+                     frequency = frequency(prediction$mean), 
+                     end=end(prediction$mean))
+  # 
+  prediction$upper=rbind(c(lastValue,lastValue),prediction$upper)
+  #
+  prediction$lower=rbind(c(lastValue,lastValue),prediction$lower)
+  
+  
+  #format  
+  
+  #x_full = as.POSIXlt(seq(from=parsed_dates[1], to = tail(parsed_dates,1), length.out = length(parsed_dates)))
+  f_full = as.POSIXlt(seq(from=tail(parsed_dates,1), to = (tail(parsed_dates,1)+interval*(forecastLength)), length.out = forecastLength+1))
+  
+  
+  #historical data
+  x1 = seq(1,length(prediction$x[fFromTo[1]:N]))
+  y1 = as.numeric(prediction$x[fFromTo[1]:N])
+  
+  #forecast
+  x2 = seq(length(prediction$x[fFromTo[1]:N]),length.out = length(prediction$mean))
+  y2 = as.numeric(prediction$mean)
+  
+  #fitted data 
+  # x3 = seq(length(prediction$fitted),length.out = length(prediction$fitted))
+  y3 = as.numeric(prediction$fitted[fFromTo[1]:N])
+  
+  
+  p1a<-ggplot(data=NULL,aes(x=x1,y=y1) )
+  p1a<-p1a+geom_line(col=alpha(pointsCol,transparency), lwd = pointCex)
+  
   
   if(showInPlotFitted)
   {
-    pTemp =window(prediction$fitted, start = 0)
-    lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
+    p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x1, y = y3), col=alpha(fittedCol,transparency), lty = 2,  lwd = pointCex * 0.75)
+    
+    #pTemp =window(prediction$fitted, start = 0)
+    #lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
   }
   
-  axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
+  p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x2, y = y2), col=alpha(forecastCol,transparency), lwd = pointCex)
   
-  title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
-  title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
+  #conf intervals
+  if(!is.null(lowerConfInterval))
+  {
+    lower2 = lower1 = as.numeric(prediction$lower[,1])
+    upper2 = upper1 = as.numeric(prediction$upper[,1])
+    id = x2
+    
+    names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id   
+    cf_full = as.character(f_full)
+    
+    p1a <- p1a + geom_ribbon( inherit.aes = FALSE , mapping = aes(x = id, ymin = lower1 , ymax = upper1), fill = "blue4", alpha = 0.25)
+  }
   
-  axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
+  if(upperConfInterval>0.01)
+  {
+    if(!is.null(lowerConfInterval))
+    {  
+      lower2 = as.numeric(prediction$lower[,2])
+      upper2 = as.numeric(prediction$upper[,2])
+    }
+    else
+    {  
+      lower1 = lower2 = as.numeric(prediction$lower[,1])
+      upper1 =upper2 = as.numeric(prediction$upper[,1])
+    } 
+    
+    id = x2
+    
+    names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id 
+    cf_full = as.character(f_full)
+    
+    p1a <- p1a + geom_ribbon( inherit.aes = FALSE , mapping = aes(x = id, ymin = lower2, ymax = upper2), fill = "gray50", alpha = 0.25)
+  }
+  
+  #design 
+  p1a <- p1a + labs (title = pbiInfo, caption = NULL) + theme_bw() 
+  p1a <- p1a + xlab(labTime) + ylab(labValue) 
+  p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
+  p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
+                                                  hjust=1, size = sizeTicks, colour = "gray60"),
+                      axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),
+                      plot.title  = element_text(hjust = 0.5, size = sizeWarn, colour = infoTextCol), 
+                      axis.title=element_text(size =  sizeLabel),
+                      axis.text=element_text(size =  sizeTicks),
+                      panel.border = element_blank())
   
   
+  print(p1a)
+  
+  
+  
+  
+  
+  
+  
+  #plot 
+  # plot(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
+  #      main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
+  #      xlim = c(xLim1,xLim2))
+  # 
+  # if(showInPlotFitted)
+  # {
+  #   pTemp =window(prediction$fitted, start = 0)
+  #   lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
+  # }
+  # 
+  # axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
+  # 
+  # title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
+  # title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
+  # 
+  # axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
+  
+
+    
 
   
 } else{ #empty plot
@@ -489,5 +606,5 @@ if(length(timeSeries)>=minPoints) {
 }
 
 #add warning as subtitle
-if(showWarnings)
-  title(main=NULL, sub=pbiWarning,outer=FALSE, col.sub = "gray50", cex.sub=cexSub)
+# if(showWarnings)
+#   title(main=NULL, sub=pbiWarning,outer=FALSE, col.sub = "gray50", cex.sub=cexSub)
