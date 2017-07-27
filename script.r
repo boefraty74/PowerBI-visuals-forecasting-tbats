@@ -456,9 +456,9 @@ if(length(timeSeries)>=minPoints) {
   
   x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
-  correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
+  #correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
   
-  yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
+  #yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
   
   
   
@@ -559,7 +559,7 @@ if(length(timeSeries)>=minPoints) {
   #design 
   p1a <- p1a + labs (title = pbiInfo, caption = NULL) + theme_bw() 
   p1a <- p1a + xlab(labTime) + ylab(labValue) 
-  p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
+  p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x[fFromTo[1]:N]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
   p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
                                                   hjust=1, size = sizeTicks, colour = "gray60"),
                       axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),

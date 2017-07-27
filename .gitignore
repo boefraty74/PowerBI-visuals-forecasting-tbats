@@ -45,3 +45,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+.tmp/drop/pbiviz.json
+.tmp/drop/status
+dist/PowerBI-visuals-forcasting-TBATS_prev.pbiviz
+.tmp/drop/status
