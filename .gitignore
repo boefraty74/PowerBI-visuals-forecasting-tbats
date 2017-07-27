@@ -49,3 +49,9 @@ Temporary Items
 .tmp/drop/status
 dist/PowerBI-visuals-forcasting-TBATS_prev.pbiviz
 .tmp/drop/status
+.tmp/drop/pbiviz.json
+.tmp
+.tmp/*
+dist
+dist/*
+

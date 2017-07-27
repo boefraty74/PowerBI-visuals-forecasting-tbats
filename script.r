@@ -60,21 +60,21 @@ showInfoCriterion = FALSE
 # if(exists("settings_info_params_showInfoCriterion"))
 #   showInfoCriterion = settings_info_params_showInfoCriterion
 
-  whichInfo = "none"
- if(exists("settings_info_params_whichInfo"))
-   whichInfo = settings_info_params_whichInfo
-  
-  if(whichInfo == "AIC")
-  {
-    showInfoCriterion = TRUE
-  }else{
-    if(whichInfo == "cumulative")
-      showInfoCumSum = TRUE
-    else
-      if(whichInfo == "method")
+whichInfo = "none"
+if(exists("settings_info_params_whichInfo"))
+  whichInfo = settings_info_params_whichInfo
+
+if(whichInfo == "AIC")
+{
+  showInfoCriterion = TRUE
+}else{
+  if(whichInfo == "cumulative")
+    showInfoCumSum = TRUE
+  else
+    if(whichInfo == "method")
       showInfoMethodTBATS = TRUE}
-  
-  
+
+
 
 ##PBI_PARAM: Forecast length
 #Type:integer, Default:500, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
@@ -408,12 +408,13 @@ if(length(timeSeries)>=minPoints) {
     prediction$fitted[prediction$fitted<0] = 0
   }
   
+  inI = seq(from = fFromTo[1],length.out = myInclude)
+  
   #calculate cumulative forecast
-  tempVal = sum(dataset[fFromTo[1]:N,2])
+  tempVal = sum(dataset[inI,2])
   if(is.na(tempVal))
     tempVal = 0
   myCumSum = sum(prediction$mean) + tempVal
-  
   
   
   if(showInfo && showInfoMethodTBATS)
@@ -432,11 +433,6 @@ if(length(timeSeries)>=minPoints) {
   
   NpF = myInclude + myForecastLength
   
-  #xlim
-  xLim1 = 0 - 1/max(freqs)
-  xLim2 = (NpF-1)/max(freqs)
-  
-  #par(oma = c(0,0,0,0))
   par(mar = c(5+showInfo,6 + (1 - showScientificY) , 1, 2))
   
   
@@ -456,71 +452,45 @@ if(length(timeSeries)>=minPoints) {
   
   x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
-  #correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
-  
-  #yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
-  
-  
-  
-  
-  # ----data for plot 
-  
- # fromDate = allTimes[fFromTo[1]]
-#  toDate = allTimes[fFromTo[2]]
-  
- # x_with_f_exist = as.POSIXlt(seq(from=fromDate, to = toDate, by = interval))
- # iii = unique(round(seq(from = 1, to = length(x_with_f_exist), length.out = numTicks)))
-#  x_with_f = x_with_f_exist[iii]
-  
-#  if(userFormatX=="auto")
-#    userFormatX = NULL;
-  
-#  x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
   
   lastValue = tail(prediction$x,1)
   
-  prediction$mean=ts(c(lastValue,prediction$mean), 
-                     frequency = frequency(prediction$mean), 
-                     end=end(prediction$mean))
-  # 
-  prediction$upper=rbind(c(lastValue,lastValue),prediction$upper)
-  #
-  prediction$lower=rbind(c(lastValue,lastValue),prediction$lower)
-  
-  
   #format  
   
-  #x_full = as.POSIXlt(seq(from=parsed_dates[1], to = tail(parsed_dates,1), length.out = length(parsed_dates)))
   f_full = as.POSIXlt(seq(from=tail(parsed_dates,1), to = (tail(parsed_dates,1)+interval*(forecastLength)), length.out = forecastLength+1))
   
   
   #historical data
-  x1 = seq(1,length(prediction$x[fFromTo[1]:N]))
-  y1 = as.numeric(prediction$x[fFromTo[1]:N])
+  x1 = seq(0,length.out = length(prediction$x[inI]))
+  y1 = as.numeric(prediction$x[inI])
   
   #forecast
-  x2 = seq(length(prediction$x[fFromTo[1]:N]),length.out = length(prediction$mean))
+  x2 = seq(length(prediction$x[inI]),length.out = length(prediction$mean))
   y2 = as.numeric(prediction$mean)
   
   #fitted data 
-  # x3 = seq(length(prediction$fitted),length.out = length(prediction$fitted))
-  y3 = as.numeric(prediction$fitted[fFromTo[1]:N])
+  y3 = as.numeric(prediction$fitted[inI])
   
   
   p1a<-ggplot(data=NULL,aes(x=x1,y=y1) )
-  p1a<-p1a+geom_line(col=alpha(pointsCol,transparency), lwd = pointCex)
   
+  if(sum(!is.na(y1))>1)
+    p1a<-p1a+geom_line(col=alpha(pointsCol,transparency), lwd = pointCex)
+  else
+    p1a<-p1a+geom_point(col=alpha(pointsCol,transparency), size = pointCex)
   
   if(showInPlotFitted)
   {
-    p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x1, y = y3), col=alpha(fittedCol,transparency), lty = 2,  lwd = pointCex * 0.75)
-    
-    #pTemp =window(prediction$fitted, start = 0)
-    #lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
+    if(sum(!is.na(y3))>1)
+      p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x1, y = y3), col=alpha(fittedCol,transparency), lty = 2,  lwd = pointCex * 0.75)
+    else
+      p1a <- p1a + geom_point(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x1, y = y3), col=alpha(fittedCol,transparency), size = pointCex)
   }
-  
-  p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x2, y = y2), col=alpha(forecastCol,transparency), lwd = pointCex)
+  if(length(y2)>1)
+    p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x2, y = y2), col=alpha(forecastCol,transparency), lwd = pointCex)
+  else
+    p1a <- p1a + geom_point(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x2, y = y2), col=alpha(forecastCol,transparency), size = pointCex)
   
   #conf intervals
   if(!is.null(lowerConfInterval))
@@ -559,8 +529,12 @@ if(length(timeSeries)>=minPoints) {
   #design 
   p1a <- p1a + labs (title = pbiInfo, caption = NULL) + theme_bw() 
   p1a <- p1a + xlab(labTime) + ylab(labValue) 
-  p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x[fFromTo[1]:N]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
-  p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
+  
+  #p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x[fFromTo[1]:N]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
+  p1a <- p1a + scale_x_continuous(breaks = seq(0,length(prediction$x[inI]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
+  
+  
+   p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
                                                   hjust=1, size = sizeTicks, colour = "gray60"),
                       axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),
                       plot.title  = element_text(hjust = 0.5, size = sizeWarn, colour = infoTextCol), 
@@ -595,9 +569,9 @@ if(length(timeSeries)>=minPoints) {
   # 
   # axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
   
-
-    
-
+  
+  
+  
   
 } else{ #empty plot
   plot.new()
