@@ -444,27 +444,6 @@
      "settings_info_params":{
         "displayName": "Info parameters",
         "properties": {
-        
-            "showInfoMethodTBATS":{
-            "displayName": "Show TBATS method selected",
-            "type": {
-              "bool": true
-            }
-          },
-            "showInfoCumSum":{
-            "displayName": "Show cumulative value",
-            "description": "Show cumulative value inside shown period (actual + predicted)",
-            "type": {
-              "bool": true
-            }
-          },
-          "showInfoCriterion":{
-            "displayName": "Show information criterion",
-            "description": "Show information criterion of the found model",
-            "type": {
-              "bool": true
-            }
-          },
            "textSize":{
             "displayName": "Font size",
 			      "description": "Font size used to show information",
@@ -496,6 +475,30 @@
               {
                 "displayName": "3",
                 "value": "3"
+              }
+            ]
+          }
+        },
+         "whichInfo": {
+          "displayName": "Information content",
+          "description": "Select one of the items: information criterion (AIC), cumulative forecast value (actual + predicted), or TBATS method",
+          "type": {
+            "enumeration": [
+              {
+                "displayName": "none",
+                "value": "none"
+              },
+              {
+                "displayName": "AIC",
+                "value": "AIC"
+              },
+              {
+                "displayName": "cumulative",
+                "value": "cumulative"
+              },
+              {
+                "displayName": "method",
+                "value": "method"
               }
             ]
           }

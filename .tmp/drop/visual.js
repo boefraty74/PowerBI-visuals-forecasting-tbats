@@ -215,11 +215,9 @@ var powerbi;
                         };
                         this.settings_info_params = {
                             textSize: 10,
-                            showInfoMethodTBATS: false,
-                            showInfoCumSum: false,
-                            showInfoCriterion: false,
                             infoTextCol: "gray50",
-                            numDigitsInfo: "0"
+                            numDigitsInfo: "0",
+                            whichInfo: "none"
                         };
                         this.settings_axes_params = {
                             showScientificY: false,
@@ -260,11 +258,9 @@ var powerbi;
                         };
                         this.settings_info_params = {
                             textSize: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
-                            showInfoCriterion: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoCriterion', false),
-                            showInfoCumSum: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
-                            showInfoMethodTBATS: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
                             infoTextCol: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
                             numDigitsInfo: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'numDigitsInfo', "0"),
+                            whichInfo: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_info_params', 'whichInfo', "none"),
                         };
                         this.settings_axes_params = {
                             showScientificY: PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.getValue(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
@@ -362,11 +358,9 @@ var powerbi;
                                 objectEnumeration.push({
                                     objectName: objectName,
                                     properties: {
+                                        whichInfo: this.settings_info_params.whichInfo,
                                         textSize: this.settings_info_params.textSize,
                                         infoTextCol: this.settings_info_params.infoTextCol,
-                                        showInfoCriterion: this.settings_info_params.showInfoCriterion,
-                                        showInfoCumSum: this.settings_info_params.showInfoCumSum,
-                                        showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS,
                                         numDigitsInfo: this.settings_info_params.numDigitsInfo
                                     },
                                     selector: null

@@ -52,12 +52,11 @@ module powerbi.extensibility.visual {
         valuesNonNegative: boolean;
     }
     interface VisualInfoParams {
-        showInfoMethodTBATS: boolean;
-        showInfoCumSum: boolean;
-        showInfoCriterion: boolean;
         textSize: number;
         infoTextCol: string;
         numDigitsInfo: string;
+        whichInfo : string;
+
     }
     interface VisualAxesParams {
         showScientificY: boolean;
@@ -120,11 +119,9 @@ module powerbi.extensibility.visual {
 
             this.settings_info_params = <VisualInfoParams>{
                 textSize: 10,
-                showInfoMethodTBATS: false,
-                showInfoCumSum: false,
-                showInfoCriterion: false,
                 infoTextCol: "gray50",
-                numDigitsInfo: "0"
+                numDigitsInfo: "0",
+                whichInfo: "none"
             };
             this.settings_axes_params = <VisualAxesParams>{
                 showScientificY: false,
@@ -175,11 +172,10 @@ module powerbi.extensibility.visual {
             this.settings_info_params = <VisualInfoParams>{
 
                 textSize: getValue<number>(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
-                showInfoCriterion: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCriterion', false),
-                showInfoCumSum: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoCumSum', false),
-                showInfoMethodTBATS: getValue<boolean>(dataView.metadata.objects, 'settings_info_params', 'showInfoMethodTBATS', false),
                 infoTextCol: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
                 numDigitsInfo: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'numDigitsInfo', "0"),
+                whichInfo: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'whichInfo', "none"),
+                
             }
             this.settings_axes_params = <VisualAxesParams>{
                 showScientificY: getValue<boolean>(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
@@ -293,11 +289,9 @@ module powerbi.extensibility.visual {
 
                         objectName: objectName,
                         properties: {
+                            whichInfo: this.settings_info_params.whichInfo,
                             textSize: this.settings_info_params.textSize,
                             infoTextCol: this.settings_info_params.infoTextCol,
-                            showInfoCriterion: this.settings_info_params.showInfoCriterion,
-                            showInfoCumSum: this.settings_info_params.showInfoCumSum,
-                            showInfoMethodTBATS: this.settings_info_params.showInfoMethodTBATS,
                             numDigitsInfo: this.settings_info_params.numDigitsInfo
                         },
                         selector: null

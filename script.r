@@ -44,23 +44,37 @@ Sys.setlocale("LC_ALL","English") # Internationalization
 ##PBI_PARAM: Show cumulative value inside shown period (actual + predicted)?
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoCumSum = FALSE
-if(exists("settings_info_params_showInfoCumSum"))
-  showInfoCumSum = settings_info_params_showInfoCumSum
+# if(exists("settings_info_params_showInfoCumSum"))
+#   showInfoCumSum = settings_info_params_showInfoCumSum
 
 ##PBI_PARAM: Show TBATS method selected
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoMethodTBATS = FALSE
-if(exists("settings_info_params_showInfoMethodTBATS"))
-  showInfoMethodTBATS = settings_info_params_showInfoMethodTBATS
+# if(exists("settings_info_params_showInfoMethodTBATS"))
+#   showInfoMethodTBATS = settings_info_params_showInfoMethodTBATS
 
 
 ##PBI_PARAM: Show information criterion of the found model
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoCriterion = FALSE
-if(exists("settings_info_params_showInfoCriterion"))
-  showInfoCriterion = settings_info_params_showInfoCriterion
+# if(exists("settings_info_params_showInfoCriterion"))
+#   showInfoCriterion = settings_info_params_showInfoCriterion
 
-
+  whichInfo = "none"
+ if(exists("settings_info_params_whichInfo"))
+   whichInfo = settings_info_params_whichInfo
+  
+  if(whichInfo == "AIC")
+  {
+    showInfoCriterion = TRUE
+  }else{
+    if(whichInfo == "cumulative")
+      showInfoCumSum = TRUE
+    else
+      if(whichInfo == "method")
+      showInfoMethodTBATS = TRUE}
+  
+  
 
 ##PBI_PARAM: Forecast length
 #Type:integer, Default:500, Range:NA, PossibleValues:NA, Remarks: NULL means choose forecast length automatically
@@ -188,23 +202,6 @@ labelsTextSize = 1.2
 if(exists("settings_axes_params_textSize"))
   labelsTextSize = as.numeric(settings_axes_params_textSize)/12
 
-
-
-###############Library Declarations###############
-
-libraryRequireInstall = function(packageName, ...)
-{
-  if(!require(packageName, character.only = TRUE)) 
-    warning(paste("*** The package: '", packageName, "' was not installed ***",sep=""))
-}
-
-libraryRequireInstall("graphics")
-libraryRequireInstall("scales")
-libraryRequireInstall("forecast")
-libraryRequireInstall("zoo")
-libraryRequireInstall("ggplot2")
-libraryRequireInstall("lubridate")
-
 ###############Internal parameters definitions#################
 
 #PBI_PARAM Minimal number of points
@@ -280,246 +277,34 @@ showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
 useParallel = FALSE
 
+
+
+
+#PBI_PARAM Size of labels on axes
+#Type:numeric , Default:12, Range:NA, PossibleValues:[1,50], Remarks: NA
+sizeLabel = 12
+
+#PBI_PARAM Size of warnings font
+#Type:numeric , Default:cexSub*10, Range:NA, PossibleValues:[1,50], Remarks: NA
+#sizeWarn = cexSub*8
+
+#PBI_PARAM opacity of conf interval color
+transparencyConfInterval = 0.3 
+
+##PBI_PARAM: Should warnings text be displayed?
+#Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
+#showWarnings = FALSE #changed in 1.0.2 (HTML-based) to be FALSE by default 
+
+
+
+###############Library Declarations###############
+
+source('./r_files/utils.r')
+
 ###############Internal functions definitions#################
 
-# tiny function to deal with verl long strings on plot
-cutStr2Show = function(strText, strCex = 0.8, abbrTo = 100, isH = TRUE, maxChar = 3, partAvailable = 1)
-{
-  # partAvailable, wich portion of window is available, in [0,1]
-  if(is.null(strText))
-    return (NULL)
-  
-  SCL = 0.075*strCex/0.8
-  pardin = par()$din
-  gStand = partAvailable*(isH*pardin[1]+(1-isH)*pardin[2]) /SCL
-  
-  # if very very long abbreviate
-  if(nchar(strText)>abbrTo && nchar(strText)> 1)
-    strText = abbreviate(strText, abbrTo)
-  
-  # if looooooong convert to lo...
-  if(nchar(strText)>round(gStand) && nchar(strText)> 1)
-    strText = paste(substring(strText,1,floor(gStand)),"...",sep="")
-  
-  # if shorter than maxChar remove 
-  if(gStand<=maxChar)
-    strText = NULL
-  
-  return(strText) 
-}
 
 
-# verify if "perSeason" is good for "frequency" parameter
-freqSeason = function(seasons,perSeason)
-{
-  if((seasons > 5 && perSeason > 3) || (seasons>2 && perSeason > 7))
-    return (perSeason)
-  
-  return(1)
-}
-
-# find frequency using the dates, targetS is a "recommended" seasonality 
-findFreq = function(dates, targetS = "Automatic")
-{
-  freq = 1
-  N = length(dates)
-  nnn = c("Minute","Hour", "Day", "Week", "Month", "Quater", "Year")
-  seasons = rep(NaN,7)
-  names(seasons) = nnn
-  perSeason = seasons
-  
-  seasons["Day"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="days"))
-  seasons["Hour"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="hours"))
-  seasons["Minute"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="mins"))
-  seasons["Week"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="weeks"))
-  seasons["Month"] = seasons["Day"]/30
-  seasons["Year"] = seasons["Day"]/365.25
-  seasons["Quater"] = seasons["Year"]*4
-  
-  perSeason = N/seasons
-  
-  if(targetS!="Automatic") # target 
-    freq = perSeason[targetS]
-  
-  if(freq < 2 || round(freq)>24) # if TRUE, target season factor is not good 
-    freq = 1
-  
-  for( s in rev(nnn)) # check year --> Quater --> etc
-    if(freq==1 || round(freq)>24)
-      freq = freqSeason(seasons[s],perSeason[s])
-  
-  
-  if(round(freq)>24) # limit of exp smoothing R implementation
-    freq = 1
-  
-  return(freq)
-}
-
-
-
-# Find number of ticks on X axis 
-FindTicksNum = function(n,f)
-{
-  tn = 10 # default minimum
-  D = 2 # tick/inch
-  numCircles = n/f
-  xSize = par()$din[1]
-  tn = max(round(xSize*D),tn)
-  return(tn) 
-}
-
-#format labels on X-axis automatically 
-flexFormat = function(dates, orig_dates, freq = 1, myformat = NULL)
-{
-  
-  days=(as.numeric(difftime(dates[length(dates)],dates[1]),units="days"))
-  months = days/30
-  years = days/365.25
-  
-  
-  constHour = length(unique(orig_dates$hour))==1
-  constMin = length(unique(orig_dates$min))==1
-  constSec = length(unique(orig_dates$sec))==1
-  constMon = length(unique(orig_dates$mon))==1
-  
-  timeChange = any(!constHour,!constMin,!constSec)
-  
-  if(is.null(myformat))
-  {
-    if(years > 10){
-      if(constMon)
-      {
-        myformat = "%Y" #many years => only year :2001
-      }else{
-        myformat = "%m/%y" #many years + months :12/01
-      }
-    }else{
-      if(years > 1 && N < 50){
-        myformat = "%b %d, %Y" #several years, few samples:Jan 01, 2010
-      }else{
-        if(years > 1){
-          myformat = "%m/%d/%y" #several years, many samples: 01/20/10
-        }else{
-          if(years <= 1 && !timeChange)
-            myformat = "%b %d" #1 year,no time: Jan 01
-        }  
-      }
-    }
-  }
-  if(is.null(myformat) && timeChange)
-    if(years>1){
-      myformat = "%m/%d/%y %H:%M" # 01/20/10 12:00
-    }else{
-      if(days>1){
-        myformat = "%b %d, %H:%M" # Jan 01 12:00
-      }else{
-        if(days<=1){
-          myformat = "%H:%M" # Jan 01 12:00
-        }  
-      }
-    }
-  if(!is.null(myformat)){
-    if(myformat == "%Y,Q%q")
-      dates = as.yearqtr(dates)
-    dates1= format(dates,  myformat)
-  }else{
-    dates1 = as.character(1:length(dates)) # just id 
-  }
-  return(dates1)
-}
-
-joinFreq = function (f1 ,f2 = NULL)
-{
-  if(is.null(f1) || is.na(f1) || f1 < 1)
-    f1 = NULL
-  if(is.null(f2) || is.na(f2) || f2 < 1)
-    f2 = NULL
-  
-  f = sort(unique(c(f1,f2)))
-  if(is.null(f) || is.na(f) || f < 1)
-    f = 1
-  
-  return(f)
-  
-}
-
-
-indexShowFromTo = function(showFromTo,datesActual, datesAll, refPointShift = 0)
-{
-  
-  secShift = -refPointShift*60*60
-  # datesActual$hour = datesActual$hour +  refPointShift
-  # datesAll$hour = datesAll$hour + refPointShift
-  
-  datesActual = datesActual +  secShift
-  datesAll = datesAll + secShift
-  
-  datesActual = as.POSIXlt(datesActual)
-  datesAll = as.POSIXlt(datesAll)
-  
-  Lall = length(datesAll)
-  Lactual = length(datesActual)
-  
-  if(showFromTo == "all")
-  {
-    frto = c(1,Lall)
-    return(frto)
-  }
-  
-  if(showFromTo == "hour")
-  {
-    v = datesAll$hour
-    target = v[Lactual]
-  }
-  
-  if(showFromTo == "mday")
-  {
-    v = datesAll$mday
-    target = v[Lactual]
-  }
-  if(showFromTo == "mon")
-  {
-    v = datesAll$mon
-    target = v[Lactual]
-  }
-  if(showFromTo == "year")
-  {
-    v = datesAll$year
-    target = v[Lactual]
-  }
-  
-  if(showFromTo == "week")
-  {
-    
-    v = lubridate::week(datesAll)
-    target = v[Lactual]
-  }
-  
-  
-  fr = Lactual
-  # go backward 
-  for (i in rev(1:Lactual))
-  {
-    if(v[i] == target)
-      fr = i
-    else
-      break;
-  }
-  
-  to = Lactual
-  # go forward 
-  for (i in (Lactual:Lall))
-  {
-    if(v[i] == target)
-      to = i
-    else
-      break;
-  }
-  frto = c(fr,to)
-  
-  return(frto)
-  
-}
 
 
 ###############Upfront input correctness validations (where possible)#################
@@ -540,9 +325,6 @@ if(!exists("Date") || !exists("Value"))
   labTime = "Time"
   labValue=names(dataset)[ncol(dataset)]
   
-  # dataset = dataset[-nrow(dataset),]
-  # dataset = dataset[-nrow(dataset),]
-  # dataset = dataset[-nrow(dataset),]
   dataset[,2] = as.numeric(dataset[,2])
   N=nrow(dataset)
   
@@ -635,17 +417,17 @@ if(length(timeSeries)>=minPoints) {
   
   
   if(showInfo && showInfoMethodTBATS)
-    pbiInfo=paste(pbiInfo,"", prediction$method, ". ",sep="")
+    pbiInfo=paste(pbiInfo,"", prediction$method, "",sep="")
   
   if(showInfoCumSum)
-    pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","),". ", sep="")
+    pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","),"", sep="")
   
   if(showInfoCriterion)
-    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","), ". ", sep="")
+    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","), "", sep="")
   
   #axes labels
-  labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE)
-  labValue = cutStr2Show(labValue, strCex = labelsTextSize, isH = FALSE)
+  labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE) #TODO
+  labValue = cutStr2Show(labValue, strCex = labelsTextSize, isH = FALSE) #TODO
   pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE,maxChar = 5, partAvailable = 0.9)
   
   NpF = myInclude + myForecastLength
@@ -656,10 +438,6 @@ if(length(timeSeries)>=minPoints) {
   
   #par(oma = c(0,0,0,0))
   par(mar = c(5+showInfo,6 + (1 - showScientificY) , 1, 2))
-  
-  plot.forecast(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
-                main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
-                xlim = c(xLim1,xLim2))
   
   
   #format  x_with_f
@@ -679,9 +457,22 @@ if(length(timeSeries)>=minPoints) {
   x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
   correction = (NpF-1)/(numTicks-1) # needed due to subsampling of ticks
-  axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
   
   yyy = c(prediction$mean,prediction$upper,prediction$lower,dataset[fFromTo[1]:N,2])
+  
+  
+  #plot 
+  plot(prediction, lwd=pointCex, col=alpha(pointsCol,transparency), fcol=alpha(forecastCol,transparency), flwd = pointCex, shaded=fillConfidenceLevels,
+       main = "", sub = pbiInfo, col.sub = infoTextCol, cex.sub = cexSub,  xlab = "", ylab = "", xaxt = "n",yaxt = "n", include = myInclude, 
+       xlim = c(xLim1,xLim2))
+  
+  if(showInPlotFitted)
+  {
+    pTemp =window(prediction$fitted, start = 0)
+    lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
+  }
+  
+  axis(1, at = 0+correction*((0:(numTicks-1))/max(freqs)), labels = x_with_forcast_formatted)
   
   title(ylab = labValue, line = 4 + (1-showScientificY)*1, cex.lab= labelsTextSize, col.lab = labelsTextCol)
   title(xlab = labTime,cex.lab= labelsTextSize, col.lab = labelsTextCol)
@@ -689,11 +480,7 @@ if(length(timeSeries)>=minPoints) {
   axis(2,at=pretty(yyy),labels=format(pretty(yyy), big.mark = ",", scientific = showScientificY),las = !showScientificY)
   
   
-  if(showInPlotFitted)
-  {
-    pTemp =window(prediction$fitted, start = 0)
-    lines(pTemp,col = alpha(fittedCol,transparency), lty = 2, lwd = pointCex*0.75)
-  }
+
   
 } else{ #empty plot
   plot.new()
