@@ -535,17 +535,13 @@ if(length(timeSeries)>=minPoints) {
   p1a <- p1a + scale_x_continuous(breaks = seq(0,length(prediction$x[inI]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
   
   
-   p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
+  p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
                                                   hjust=1, size = sizeTicks, colour = "gray60"),
                       axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),
                       plot.title  = element_text(hjust = 0.5, size = sizeWarn, colour = infoTextCol), 
                       axis.title=element_text(size =  sizeLabel),
                       axis.text=element_text(size =  sizeTicks),
                       panel.border = element_blank())
-  
-  
- 
-  
   
   
 } else{ #empty plot
