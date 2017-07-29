@@ -172,6 +172,12 @@ valuesNonNegative = FALSE
 if(exists("settings_additional_params_valuesNonNegative"))
   valuesNonNegative = settings_additional_params_valuesNonNegative
 
+##PBI_PARAM: Use par. processing 
+#Type:bool, Default:"F", Range:NA, PossibleValues:NA
+useParProc = FALSE
+if(exists("settings_additional_params_useParProc"))
+  useParProc = settings_additional_params_useParProc
+
 ##PBI_PARAM: fast algo?
 #Type:bool, Default:"F", Range:NA, PossibleValues:NA
 algModeFast = FALSE
@@ -198,15 +204,15 @@ if(exists("settings_axes_params_labelsTextCol"))
 
 ##PBI_PARAM: labels text size
 #Type:number, Default:1.2, Range:[8,50]/12, PossibleValues:NA
-labelsTextSize = 1.2
+sizeLabel = 12
 if(exists("settings_axes_params_textSize"))
-  labelsTextSize = as.numeric(settings_axes_params_textSize)/12
+  sizeLabel = as.numeric(settings_axes_params_textSize)
 
 ###############Internal parameters definitions#################
 
 #PBI_PARAM Minimal number of points
-#Type:integer, Default:7, Range:[0,], PossibleValues:NA, Remarks: NA
-minPoints = 7
+#Type:integer, Default:15, Range:[5,50], PossibleValues:NA, Remarks: NA
+minPoints = 15
 
 ##PBI_PARAM Color of time series line
 #Type:string, Default:"orange", Range:NA, PossibleValues:"orange","blue","green","black"
@@ -275,14 +281,11 @@ showWarnings = TRUE
 
 showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
 
-useParallel = FALSE
+useParallel = useParProc
+if(useParProc)
+  if(getwd() == "C:/") # in service
+    useParallel = FALSE
 
-
-
-
-#PBI_PARAM Size of labels on axes
-#Type:numeric , Default:12, Range:NA, PossibleValues:[1,50], Remarks: NA
-sizeLabel = 12
 
 #PBI_PARAM Size of warnings font
 #Type:numeric , Default:cexSub*10, Range:NA, PossibleValues:[1,50], Remarks: NA
@@ -301,6 +304,7 @@ transparencyConfInterval = 0.3
 
 source('./r_files/utils.r')
 source('./r_files/flatten_HTML.r')
+libraryRequireInstall("plotly")
 
 ###############Internal functions definitions#################
 
@@ -361,8 +365,9 @@ if(!exists("Date") || !exists("Value"))
 
 pbiInfo = NULL
 
+gooodpd = goodPlotDimension(3.5,3)
 
-if(length(timeSeries)>=minPoints) {
+if(length(timeSeries)>=minPoints && gooodpd) {
   
   # compute part of dates to show
   actTimes = as.POSIXlt(seq(from=parsed_dates[1], to = parsed_dates[length(parsed_dates)], length.out = length(parsed_dates)))
@@ -428,8 +433,10 @@ if(length(timeSeries)>=minPoints) {
     pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","), "", sep="")
   
   #axes labels
-  labTime = cutStr2Show(labTime, strCex = labelsTextSize, isH = TRUE) #TODO
-  labValue = cutStr2Show(labValue, strCex = labelsTextSize, isH = FALSE) #TODO
+  labTimeShort = cutStr2Show(labTime, strCex = sizeLabel/6, isH = TRUE, partAvailable = 0.8)
+  labValueShort = cutStr2Show(labValue, strCex = sizeLabel/6, isH = FALSE, partAvailable = 0.75)
+  
+  
   pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE,maxChar = 5, partAvailable = 0.9)
   
   NpF = myInclude + myForecastLength
@@ -500,7 +507,7 @@ if(length(timeSeries)>=minPoints) {
     upper2 = upper1 = as.numeric(prediction$upper[,1])
     id = x2
     
-    names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id   
+    #names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id   
     cf_full = as.character(f_full)
     
     p1a <- p1a + geom_ribbon( inherit.aes = FALSE , mapping = aes(x = id, ymin = lower1 , ymax = upper1), fill = "blue4", alpha = 0.25)
@@ -529,7 +536,7 @@ if(length(timeSeries)>=minPoints) {
   
   #design 
   p1a <- p1a + labs (title = pbiInfo, caption = NULL) + theme_bw() 
-  p1a <- p1a + xlab(labTime) + ylab(labValue) 
+  p1a <- p1a + xlab(labTimeShort) + ylab(labValueShort) 
   
   #p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x[fFromTo[1]:N]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
   p1a <- p1a + scale_x_continuous(breaks = seq(0,length(prediction$x[inI]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
@@ -539,8 +546,8 @@ if(length(timeSeries)>=minPoints) {
                                                   hjust=1, size = sizeTicks, colour = "gray60"),
                       axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),
                       plot.title  = element_text(hjust = 0.5, size = sizeWarn, colour = infoTextCol), 
-                      axis.title=element_text(size =  sizeLabel),
-                      axis.text=element_text(size =  sizeTicks),
+                      axis.title=element_text(size =  sizeLabel, colour = labelsTextCol),
+                      axis.text=element_text(size =  sizeTicks,  colour = labelsTextCol),
                       panel.border = element_blank())
   
   
@@ -548,7 +555,17 @@ if(length(timeSeries)>=minPoints) {
   
   #empty plot
   showWarnings = TRUE
-  pbiWarning1  = cutStr2Show("Not enough data points", strCex = sizeWarn/6, partAvailable = 0.85)
+  if(gooodpd)
+    pbiWarning1  = cutStr2Show("Not enough data points", strCex = sizeWarn/6, partAvailable = 0.85)
+  else
+  {
+    pbiWarning1 = "Visual is "
+    pbiWarning1 = cutStr2Show(pbiWarning1, strCex = sizeWarn/6, partAvailable = 0.9)
+    pbiWarning2 = "too small "
+    pbiWarning2 = cutStr2Show(pbiWarning2, strCex = sizeWarn/6, partAvailable = 0.9)
+    pbiWarning1 <- paste(pbiWarning1, "<br>", pbiWarning2, sep="")
+    sizeWarn = 8 #smaller
+  }
   pbiWarning<-paste(pbiWarning, pbiWarning1 , sep="<br>")
   
 }
@@ -561,5 +578,94 @@ if(showWarnings && !is.null(pbiWarning))
           axis.text=element_text(size =  sizeTicks),
           panel.border = element_blank())
 }
+ggp <- plotly_build(p1a)
 
-print(p1a)
+if(!(showWarnings && !is.null(pbiWarning)))
+{#design plotly 
+  
+  if(myInclude > 0)
+  {
+    indHistData = 1
+    indFitted = 0 
+    indForcData = 2
+    indLow = 3
+    indHigh = 4
+    
+    if(showInPlotFitted)
+    {
+      indFitted = 2
+      indForcData = 3
+      indLow = 4
+      indHigh = 5
+    }
+  }
+  else
+  {
+    indHistData = 0
+    indFitted = 0 
+    indForcData = 2
+    indLow = 3
+    indHigh = 4
+    
+    if(showInPlotFitted)
+    {
+      indForcData = 1
+      indLow = 2
+      indHigh = 3
+    }
+    
+  }
+  
+  if(indHistData)
+  ggp$x$data[[indHistData]]$text = paste("Historical data:<br>", labTime, ": ", allTimes[fFromTo[1]:N], "<br>", labValue, ": ", round(y1,2) , sep ="" ) 
+  
+  if(indForcData)
+  ggp$x$data[[indForcData]]$text = paste("Forecast data:<br>",labTime, ": ", allTimes[(N+1):fFromTo[2]], "<br>", labValue, ": ", round(y2,2) , sep ="" ) 
+  
+ 
+  if(indFitted)
+    ggp$x$data[[indFitted]]$text = paste("Fitted data:<br>",labTime, ": ", allTimes[fFromTo[1]:N], "<br>", labValue, ": ", round(y3,2) , sep ="" ) 
+  
+  
+   if(length(ggp$x$data)>=indLow && indLow)
+  {
+    iii =  as.character(ggp$x$data[[indLow]]$x)
+    ddd = as.character(allTimes[(N+1):fFromTo[2]])
+    names(ddd) = as.character(x2)
+    ddd1 = ddd[iii]
+    ggp$x$data[[indLow]]$text = paste("Conf. interval1:<br>", labTime, ": ", ddd1, "<br> lower: ", lower1[iii],"<br> upper: ", upper1[iii], sep ="" ) 
+  }
+  
+  if(length(ggp$x$data)>=indHigh)
+  {
+    iii =  as.character(ggp$x$data[[indHigh]]$x)
+    ddd = as.character(allTimes[(N+1):fFromTo[2]])
+   names(ddd) = as.character(x2)
+   ddd1 = ddd[iii]
+   ggp$x$data[[indHigh]]$text = paste("Conf. interval2:<br>", labTime, ": ", ddd1, "<br> lower: ", lower2[iii],"<br> upper: ", upper2[iii], sep ="" ) 
+  }
+  
+  ggp$x$layout$margin$l = ggp$x$layout$margin$l+10
+  
+  if(ggp$x$layout$xaxis$tickangle < -40)
+    ggp$x$layout$margin$b = ggp$x$layout$margin$b+40
+  
+}
+
+############# Create and save widget ###############
+
+p <- ggp
+
+disabledButtonsList <- list('toImage', 'sendDataToCloud', 'zoom2d', 'pan', 'pan2d', 'select2d', 'lasso2d', 'hoverClosestCartesian', 'hoverCompareCartesian')
+p$x$config$modeBarButtonsToRemove = disabledButtonsList
+
+p <- config(p, staticPlot = FALSE, editable = FALSE, sendData = FALSE, showLink = FALSE,
+            displaylogo = FALSE,  collaborate = FALSE, cloud=FALSE)
+
+internalSaveWidget(p, 'out.html')
+
+####################################################
+#display in R studio
+if(Sys.getenv("RSTUDIO")!="")
+   print(p)
+

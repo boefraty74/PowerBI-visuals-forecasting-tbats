@@ -1,4 +1,4 @@
-module powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS  {
+module powerbi.extensibility.visual.rHTMLnew95480AC55B814FBCB378FA548F2C97AD  {
     /**
      * Gets property value for a particular object.
      *

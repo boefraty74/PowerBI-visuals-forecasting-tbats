@@ -24,7 +24,37 @@
  *  THE SOFTWARE.
  */
 module powerbi.extensibility.visual {
+    "use strict";
+    // below is a snippet of a definition for an object which will contain the property values
+    // selected by the users
+    /*interface VisualSettings {
+        lineColor: string;
+    }*/
 
+    // to allow this scenario you should first the following JSON definition to the capabilities.json file
+    // under the "objects" property:
+    // "settings": {
+    //     "displayName": "Visual Settings",
+    //     "description": "Visual Settings Tooltip",
+    //     "properties": {
+    //         "lineColor": {
+    //         "displayName": "Line Color",
+    //         "type": { "fill": { "solid": { "color": true }}}
+    //         }
+    //     }
+    // }
+
+    // in order to improve the performance, one can update the <head> only in the initial rendering.
+    // set to 'true' if you are using different packages to create the widgets
+    const updateHTMLHead: boolean = false;
+
+    const renderVisualUpdateType: number[] = [
+        VisualUpdateType.Resize,
+        VisualUpdateType.ResizeEnd,
+        VisualUpdateType.Resize + VisualUpdateType.ResizeEnd
+    ];
+
+// USER 
     interface VisualSettingsForecastPlotParams {
         show: boolean;
         forecastLength: number;
@@ -50,12 +80,13 @@ module powerbi.extensibility.visual {
     interface VisualAdditionalParams {
         algModeFast: boolean;
         valuesNonNegative: boolean;
+        useParProc: boolean;
     }
     interface VisualInfoParams {
         textSize: number;
         infoTextCol: string;
         numDigitsInfo: string;
-        whichInfo : string;
+        whichInfo: string;
 
     }
     interface VisualAxesParams {
@@ -64,29 +95,32 @@ module powerbi.extensibility.visual {
         labelsTextCol: string;
         userFormatX: string;
     }
+// USER - (END)
 
 
     export class Visual implements IVisual {
-        private imageDiv: HTMLDivElement;
-        private imageElement: HTMLImageElement;
+        private rootElement: HTMLElement;
+        private headNodes: Node[];
+        private bodyNodes: Node[];
+        private settings: VisualSettings;
 
+// USER 
         private settings_forecastPlot_params: VisualSettingsForecastPlotParams;
         private settings_conf_params: VisualSettingsConfParams;
         private settings_graph_params: VisualGraphParams;
         private settings_additional_params: VisualAdditionalParams;
         private settings_info_params: VisualInfoParams;
         private settings_axes_params: VisualAxesParams;
+// USER - (END)
 
         public constructor(options: VisualConstructorOptions) {
-            this.imageDiv = document.createElement('div');
-            this.imageDiv.className = 'rcv_autoScaleImageContainer';
-            options.element.appendChild(this.imageDiv);
+            if (options && options.element) {
+                this.rootElement = options.element;
+            }
+            this.headNodes = [];
+            this.bodyNodes = [];
 
-            this.imageElement = document.createElement('img');
-            this.imageElement.className = 'rcv_autoScaleImage';
-
-            this.imageDiv.appendChild(this.imageElement);
-
+// USER 
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
                 forecastLength: 500,
                 freq1: 1,
@@ -114,7 +148,8 @@ module powerbi.extensibility.visual {
 
             this.settings_additional_params = <VisualAdditionalParams>{
                 valuesNonNegative: false,
-                algModeFast: false
+                algModeFast: false,
+                useParProc: false
             };
 
             this.settings_info_params = <VisualInfoParams>{
@@ -129,81 +164,166 @@ module powerbi.extensibility.visual {
                 labelsTextCol: "black",
                 userFormatX: "auto"
             };
+// USER - (END)
         }
 
-        public update(options: VisualUpdateOptions) {
-            let dataViews: DataView[] = options.dataViews;
-            if (!dataViews || dataViews.length === 0)
-                return;
+        public update(options: VisualUpdateOptions): void {
 
-            let dataView: DataView = dataViews[0];
-            if (!dataView || !dataView.metadata)
+            if (!options ||
+                !options.type ||
+                !options.viewport ||
+                !options.dataViews ||
+                options.dataViews.length === 0 ||
+                !options.dataViews[0]) {
                 return;
+            }
+            const dataView: DataView = options.dataViews[0];
+            this.settings = Visual.parseSettings(dataView);
+// USER 
+            this.updateObjects(dataView.metadata.objects);
+// USER - (END)
+            let payloadBase64: string = null;
+            if (dataView.scriptResult && dataView.scriptResult.payloadBase64) {
+                payloadBase64 = dataView.scriptResult.payloadBase64;
+            }
+
+            if (renderVisualUpdateType.indexOf(options.type) === -1) {
+                if (payloadBase64) {
+                    this.injectCodeFromPayload(payloadBase64);
+                }
+            } else {
+                this.onResizing(options.viewport);
+            }
+        }
+
+        public onResizing(finalViewport: IViewport): void {
+            /* add code to handle resizing of the view port */
+        }
+
+        private injectCodeFromPayload(payloadBase64: string): void {
+            // inject HTML from payload, created in R
+            // the code is injected to the 'head' and 'body' sections.
+            // if the visual was already rendered, the previous DOM elements are cleared
+
+            ResetInjector();
+
+            if (!payloadBase64) {
+                return;
+            }
+
+            // create 'virtual' HTML, so parsing is easier
+            let el: HTMLHtmlElement = document.createElement("html");
+            try {
+                el.innerHTML = window.atob(payloadBase64);
+            } catch (err) {
+                return;
+            }
+
+            // if 'updateHTMLHead == false', then the code updates the header data only on the 1st rendering
+            // this option allows loading and parsing of large and recurring scripts only once.
+            if (updateHTMLHead || this.headNodes.length === 0) {
+                while (this.headNodes.length > 0) {
+                    let tempNode: Node = this.headNodes.pop();
+                    document.head.removeChild(tempNode);
+                }
+                let headList: NodeListOf<HTMLHeadElement> = el.getElementsByTagName("head");
+                if (headList && headList.length > 0) {
+                    let head: HTMLHeadElement = headList[0];
+                    this.headNodes = ParseElement(head, document.head);
+                }
+            }
+
+            // update 'body' nodes, under the rootElement
+            while (this.bodyNodes.length > 0) {
+                let tempNode: Node = this.bodyNodes.pop();
+                this.rootElement.removeChild(tempNode);
+            }
+            let bodyList: NodeListOf<HTMLBodyElement> = el.getElementsByTagName("body");
+            if (bodyList && bodyList.length > 0) {
+                let body: HTMLBodyElement = bodyList[0];
+                this.bodyNodes = ParseElement(body, this.rootElement);
+            }
+
+            RunHTMLWidgetRenderer();
+        }
+
+        private static parseSettings(dataView: DataView): VisualSettings {
+            return VisualSettings.parse(dataView) as VisualSettings;
+        }
+
+
+        //RVIZ_IN_PBI_GUIDE:BEGIN:Added to create HTML-based 
+        /**
+         * This function gets called by the update function above. You should read the new values of the properties into 
+         * your settings object so you can use the new value in the enumerateObjectInstances function below.
+         * 
+         * Below is a code snippet demonstrating how to expose a single property called "lineColor" from the object called "settings"
+         * This object and property should be first defined in the capabilities.json file in the objects section.
+         * In this code we get the property value from the objects (and have a default value in case the property is undefined)
+         */
+        public updateObjects(objects: DataViewObjects) {
 
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
-                forecastLength: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'forecastLength', 500),
-                freq1: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq1', 1),
-                freq2: getValue<number>(dataView.metadata.objects, 'settings_forecastPlot_params', 'freq2', 1)
+                forecastLength: getValue<number>(objects, 'settings_forecastPlot_params', 'forecastLength', 500),
+                freq1: getValue<number>(objects, 'settings_forecastPlot_params', 'freq1', 1),
+                freq2: getValue<number>(objects, 'settings_forecastPlot_params', 'freq2', 1)
             };
 
-
-            this.settings_conf_params = <VisualSettingsConfParams>{
-                confInterval1: getValue<string>(dataView.metadata.objects, 'settings_conf_params', 'confInterval1', "0.5"),
-                confInterval2: getValue<string>(dataView.metadata.objects, 'settings_conf_params', 'confInterval2', "0.995"),
+           this.settings_conf_params = <VisualSettingsConfParams>{
+                confInterval1: getValue<string>(objects, 'settings_conf_params', 'confInterval1', "0.5"),
+                confInterval2: getValue<string>(objects, 'settings_conf_params', 'confInterval2', "0.995"),
 
             }
             this.settings_graph_params = <VisualGraphParams>{
-                dataCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'dataCol', "orange"),
-                forecastCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'forecastCol', "red"),
-                fittedCol: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'fittedCol', "green"),
-                percentile: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'percentile', 40),
-                weight: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'weight', 10),
-                showFromTo: getValue<string>(dataView.metadata.objects, 'settings_graph_params', 'showFromTo', "all"),
-                refPointShift: getValue<number>(dataView.metadata.objects, 'settings_graph_params', 'refPointShift', 0),
-                showInPlotFitted: getValue<boolean>(dataView.metadata.objects, 'settings_graph_params', 'showInPlotFitted', false),
+                dataCol: getValue<string>(objects, 'settings_graph_params', 'dataCol', "orange"),
+                forecastCol: getValue<string>(objects, 'settings_graph_params', 'forecastCol', "red"),
+                fittedCol: getValue<string>(objects, 'settings_graph_params', 'fittedCol', "green"),
+                percentile: getValue<number>(objects, 'settings_graph_params', 'percentile', 40),
+                weight: getValue<number>(objects, 'settings_graph_params', 'weight', 10),
+                showFromTo: getValue<string>(objects, 'settings_graph_params', 'showFromTo', "all"),
+                refPointShift: getValue<number>(objects, 'settings_graph_params', 'refPointShift', 0),
+                showInPlotFitted: getValue<boolean>(objects, 'settings_graph_params', 'showInPlotFitted', false),
 
 
             }
             this.settings_additional_params = <VisualAdditionalParams>{
-                algModeFast: getValue<boolean>(dataView.metadata.objects, 'settings_additional_params', 'algModeFast', false),
-                valuesNonNegative: getValue<boolean>(dataView.metadata.objects, 'settings_additional_params', 'valuesNonNegative', false),
+                algModeFast: getValue<boolean>(objects, 'settings_additional_params', 'algModeFast', false),
+                valuesNonNegative: getValue<boolean>(objects, 'settings_additional_params', 'valuesNonNegative', false),
+                useParProc: getValue<boolean>(objects, 'settings_additional_params', 'useParProc', false)
 
             }
             this.settings_info_params = <VisualInfoParams>{
 
-                textSize: getValue<number>(dataView.metadata.objects, 'settings_info_params', 'textSize', 10),
-                infoTextCol: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'infoTextCol', "gray50"),
-                numDigitsInfo: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'numDigitsInfo', "0"),
-                whichInfo: getValue<string>(dataView.metadata.objects, 'settings_info_params', 'whichInfo', "none"),
+                textSize: getValue<number>(objects, 'settings_info_params', 'textSize', 10),
+                infoTextCol: getValue<string>(objects, 'settings_info_params', 'infoTextCol', "gray50"),
+                numDigitsInfo: getValue<string>(objects, 'settings_info_params', 'numDigitsInfo', "0"),
+                whichInfo: getValue<string>(objects, 'settings_info_params', 'whichInfo', "none"),
                 
             }
             this.settings_axes_params = <VisualAxesParams>{
-                showScientificY: getValue<boolean>(dataView.metadata.objects, 'settings_axes_params', 'showScientificY', false),
-                textSize: getValue<number>(dataView.metadata.objects, 'settings_axes_params', 'textSize', 12),
-                labelsTextCol: getValue<string>(dataView.metadata.objects, 'settings_axes_params', 'labelsTextCol', "black"),
-                userFormatX: getValue<string>(dataView.metadata.objects, 'settings_axes_params', 'userFormatX', "auto")
+                showScientificY: getValue<boolean>(objects, 'settings_axes_params', 'showScientificY', false),
+                textSize: getValue<number>(objects, 'settings_axes_params', 'textSize', 12),
+                labelsTextCol: getValue<string>(objects, 'settings_axes_params', 'labelsTextCol', "black"),
+                userFormatX: getValue<string>(objects, 'settings_axes_params', 'userFormatX', "auto")
             }
 
-            let imageUrl: string = null;
-            if (dataView.scriptResult && dataView.scriptResult.payloadBase64) {
-                imageUrl = "data:image/png;base64," + dataView.scriptResult.payloadBase64;
-            }
 
-            if (imageUrl) {
-                this.imageElement.src = imageUrl;
-            } else {
-                this.imageElement.src = null;
-            }
-
-            this.onResizing(options.viewport);
         }
+        //RVIZ_IN_PBI_GUIDE:END:Added to create HTML-based 
 
-        public onResizing(finalViewport: IViewport): void {
-            this.imageDiv.style.height = finalViewport.height + 'px';
-            this.imageDiv.style.width = finalViewport.width + 'px';
-        }
 
-        public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
+
+
+
+        /** 
+         * This function gets called for each of the objects defined in the capabilities files and allows you to select which of the 
+         * objects and properties you want to expose to the users in the property pane.
+         * 
+         */
+        public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions):
+            VisualObjectInstance[] | VisualObjectInstanceEnumerationObject {
+
+
             let objectName = options.objectName;
             let objectEnumeration = [];
 
@@ -276,6 +396,7 @@ module powerbi.extensibility.visual {
                         properties: {
                             valuesNonNegative: this.settings_additional_params.valuesNonNegative,
                             algModeFast: this.settings_additional_params.algModeFast,
+                            useParProc: this.settings_additional_params.useParProc
 
                         },
                         selector: null
@@ -315,7 +436,10 @@ module powerbi.extensibility.visual {
                     break;
             };
 
-            return objectEnumeration;
+
+
+ return objectEnumeration;
+           // return VisualSettings.enumerateObjectInstances(this.settings || VisualSettings.getDefault(), options);
         }
     }
 }

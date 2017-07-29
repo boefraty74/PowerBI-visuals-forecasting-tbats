@@ -1,11 +1,11 @@
 module powerbi.visuals.plugins {
-    export var PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS = {
-        name: 'PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS',
-        displayName: 'Forecasting',
+    export var rHTMLnew95480AC55B814FBCB378FA548F2C97AD = {
+        name: 'rHTMLnew95480AC55B814FBCB378FA548F2C97AD',
+        displayName: 'RHTMLnew',
         class: 'Visual',
         version: '1.0.0',
-        apiVersion: '1.4.0',
-        create: (options: extensibility.visual.VisualConstructorOptions) => new powerbi.extensibility.visual.PBI_CV_8EDDC07B_EE79_4418_A84C_D73897C0E21F_TBATS.Visual(options),
+        apiVersion: '1.7.0',
+        create: (options: extensibility.visual.VisualConstructorOptions) => new powerbi.extensibility.visual.rHTMLnew95480AC55B814FBCB378FA548F2C97AD.Visual(options),
         custom: true
     };
 }

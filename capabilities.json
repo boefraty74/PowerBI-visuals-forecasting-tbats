@@ -34,7 +34,7 @@
         },
         "script": {
           "scriptProviderDefault": "R",
-          "scriptOutputType": "png",
+          "scriptOutputType": "html",
           "source": {
             "objectName": "rcv_script",
             "propertyName": "source"
@@ -438,7 +438,14 @@
             "type": {
               "bool": true
               }
-            }                  
+            },
+             "useParProc":{
+            "displayName": "Parallel processing",
+			      "description": "Use parallel processing, if possible",
+            "type": {
+              "bool": true
+              }
+            }                      
         }
     },
      "settings_info_params":{
