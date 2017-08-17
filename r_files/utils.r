@@ -25,20 +25,20 @@ cutStr2Show = function(strText, strCex = 0.8, abbrTo = 100, isH = TRUE, maxChar 
   if(is.null(strText))
     return (NULL)
   
-  SCL = 0.075*strCex/0.8
+  SCL = 0.075 * strCex / 0.8
   pardin = par()$din
-  gStand = partAvailable*(isH*pardin[1]+(1-isH)*pardin[2]) /SCL
+  gStand = partAvailable * (isH * pardin[1] + (1 - isH) * pardin[2]) / SCL
   
   # if very very long abbreviate
-  if(nchar(strText)>abbrTo && nchar(strText)> 1)
+  if(nchar(strText) > abbrTo && nchar(strText) > 1)
     strText = abbreviate(strText, abbrTo)
   
   # if looooooong convert to lo...
-  if(nchar(strText)>round(gStand) && nchar(strText)> 1)
-    strText = paste(substring(strText,1,floor(gStand)),"...",sep="")
+  if(nchar(strText) > round(gStand) && nchar(strText) > 1)
+    strText = paste(substring(strText, 1, floor(gStand)), "...", sep = "")
   
   # if shorter than maxChar remove 
-  if(gStand<=maxChar)
+  if(gStand <= maxChar)
     strText = NULL
   
   return(strText) 
@@ -46,9 +46,9 @@ cutStr2Show = function(strText, strCex = 0.8, abbrTo = 100, isH = TRUE, maxChar 
 
 
 # verify if "perSeason" is good for "frequency" parameter
-freqSeason = function(seasons,perSeason)
+freqSeason = function(seasons, perSeason)
 {
-  if((seasons > 5 && perSeason > 3) || (seasons>2 && perSeason > 7))
+  if((seasons > 5 && perSeason > 3) || (seasons > 2 && perSeason > 7))
     return (perSeason)
   
   return(1)
@@ -59,63 +59,68 @@ findFreq = function(dates, targetS = "Automatic")
 {
   freq = 1
   N = length(dates)
-  nnn = c("Minute","Hour", "Day", "Week", "Month", "Quater", "Year")
-  seasons = rep(NaN,7)
+  nnn = c("Minute", "Hour", "Day", "Week", "Month", "Quater", "Year")
+  seasons = rep(NaN, 7)
   names(seasons) = nnn
   perSeason = seasons
   
-  seasons["Day"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="days"))
-  seasons["Hour"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="hours"))
-  seasons["Minute"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="mins"))
-  seasons["Week"]=round(as.numeric(difftime(dates[length(dates)],dates[1]),units="weeks"))
-  seasons["Month"] = seasons["Day"]/30
-  seasons["Year"] = seasons["Day"]/365.25
-  seasons["Quater"] = seasons["Year"]*4
+  seasons["Day"] = round(as.numeric(difftime(dates[length(dates)], dates[1]), units = "days"))
+  seasons["Hour"] = round(as.numeric(difftime(dates[length(dates)], dates[1]), units = "hours"))
+  seasons["Minute"]=round(as.numeric(difftime(dates[length(dates)], dates[1]), units = "mins"))
+  seasons["Week"]=round(as.numeric(difftime(dates[length(dates)], dates[1]), units = "weeks"))
+  seasons["Month"] = seasons["Day"] / 30
+  seasons["Year"] = seasons["Day"] / 365.25
+  seasons["Quater"] = seasons["Year"] * 4
   
-  perSeason = N/seasons
+  perSeason = N / seasons
   
-  if(targetS!="Automatic") # target 
+  if(targetS != "Automatic") # target 
     freq = perSeason[targetS]
   
-  if(freq < 2 || round(freq)>24) # if TRUE, target season factor is not good 
+  if(freq < 2 || round(freq) > 24) # if TRUE, target season factor is not good 
     freq = 1
   
   for( s in rev(nnn)) # check year --> Quater --> etc
-    if(freq==1 || round(freq)>24)
+    if(freq == 1 || round(freq) > 24)
       freq = freqSeason(seasons[s],perSeason[s])
   
   
-  if(round(freq)>24) # limit of exp smoothing R implementation
+  if(round(freq) > 24) # limit of exp smoothing R implementation
     freq = 1
   
   return(freq)
 }
 
-
 # Find number of ticks on X axis 
-FindTicksNum = function(n,f)
+FindTicksNum1 = function(n, f, flag_ggplot = TRUE)
 {
-  tn = 10 # default minimum
+  factorGG = (if(flag_ggplot) 0.525 else 1)
+  
+  tn = 10* factorGG # default minimum
+  mtn = 20 * factorGG # default max
+  
   D = 2 # tick/inch
-  numCircles = n/f
+  numCircles = n / f
   xSize = par()$din[1]
-  tn = max(round(xSize*D),tn)
+  tn = min(max(round(xSize * D * factorGG), tn), mtn)
   return(tn) 
 }
+
+
 
 #format labels on X-axis automatically 
 flexFormat = function(dates, orig_dates, freq = 1, myformat = NULL)
 {
   
-  days=(as.numeric(difftime(dates[length(dates)],dates[1]),units="days"))
-  months = days/30
-  years = days/365.25
+  days=(as.numeric(difftime(dates[length(dates)], dates[1]), units = "days"))
+  months = days / 30
+  years = days / 365.25
   
   
-  constHour = length(unique(orig_dates$hour))==1
-  constMin = length(unique(orig_dates$min))==1
-  constSec = length(unique(orig_dates$sec))==1
-  constMon = length(unique(orig_dates$mon))==1
+  constHour = length(unique(orig_dates$hour)) == 1
+  constMin = length(unique(orig_dates$min)) == 1
+  constSec = length(unique(orig_dates$sec)) == 1
+  constMon = length(unique(orig_dates$mon)) == 1
   
   timeChange = any(!constHour,!constMin,!constSec)
   
@@ -142,13 +147,13 @@ flexFormat = function(dates, orig_dates, freq = 1, myformat = NULL)
     }
   }
   if(is.null(myformat) && timeChange)
-    if(years>1){
+    if(years > 1){
       myformat = "%m/%d/%y %H:%M" # 01/20/10 12:00
     }else{
-      if(days>1){
+      if(days > 1){
         myformat = "%b %d, %H:%M" # Jan 01 12:00
       }else{
-        if(days<=1){
+        if(days <= 1){
           myformat = "%H:%M" # Jan 01 12:00
         }  
       }
@@ -156,7 +161,7 @@ flexFormat = function(dates, orig_dates, freq = 1, myformat = NULL)
   if(!is.null(myformat)){
     if(myformat == "%Y,Q%q")
       dates = as.yearqtr(dates)
-    dates1= format(dates,  myformat)
+    dates1 = format(dates,  myformat)
   }else{
     dates1 = as.character(1:length(dates)) # just id 
   }
@@ -263,7 +268,8 @@ goodPlotDimension = function(minWidthInch = 3,minHeightInch = 2.2)
   return(re)
 }
 
-getAngleXlabels = function(mylabels)
+
+getAngleXlabels1 = function(mylabels)
 {
   NL = length(mylabels)
   NC = nchar(mylabels[1]) * 1.1
@@ -275,10 +281,76 @@ getAngleXlabels = function(mylabels)
     return(0)
   
   # no space --> -90
-  if(lenPerTick < 0.070)
+  if(lenPerTick < 0.050)
     return(90)
   
   # few space --> - 45
   return(45)
   
+}
+
+# verify if "perSeason" is good for "frequency" parameter
+freqSeason2 = function(seasons, perSeason)
+{
+  if((seasons >= 3 && perSeason >= 3) || (seasons >= 2 && perSeason >= 5))
+    return (perSeason)
+  return(1)
+}
+
+
+# find frequency using the dates, targetS is a "recommended" seasonality 
+findFreqFromDates1 = function(dates, targetS = "auto")
+{
+  freq = 1
+  N = length(dates)
+  nnn = c("hour", "day", "week", "month", "quarter", "year")
+  seasons = rep(NaN, 6)
+  names(seasons) = nnn
+  perSeason = seasons
+  
+  seasons["day"] = round(as.numeric(difftime(dates[length(dates)],dates[1]), units = "days"))
+  seasons["hour"] = round(as.numeric(difftime(dates[length(dates)],dates[1]), units = "hours"))
+  seasons["week"] = round(as.numeric(difftime(dates[length(dates)],dates[1]), units = "weeks"))
+  seasons["month"]  =  seasons["day"] / 30
+  seasons["year"]  =  seasons["day"] / 365.25
+  seasons["quarter"] = seasons["year"] * 4
+  
+  perSeason = N / seasons
+  
+  if(targetS!="auto") # target 
+    freq = perSeason[targetS]
+  else
+    freq = 1
+  
+  if(freq < 2) # if TRUE, target season factor is not good 
+    freq = 1
+  
+  for( s in rev(nnn)) # check year --> quarter --> etc
+    if(freq == 1 )
+      freq = freqSeason2(seasons[s],perSeason[s])
+  
+  return(round(freq))
+}
+
+#get valid frequency parameter, based on input from user 
+getFrequency1 = function(parsed_dates, values, tS, f)
+{
+  myFreq = f
+  
+  if(!(tS %in% c("none","manual"))) #detect from date
+  {  
+    myFreq = findFreqFromDates1(parsed_dates, targetS = tS)
+  }else{
+    if(tS == "none")
+    { myFreq = 1}
+    else
+    {# NOT YET IMPLEMENTED
+      # if(tS == "autodetect from value")
+      #   myFreq = freqFromValue1(values)
+    }
+  }
+  numPeriods = floor(length(values) / myFreq)
+  if(numPeriods < 2)
+    myFreq = findFreqFromDates1(parsed_dates, targetS = "auto")
+  return(myFreq)
 }

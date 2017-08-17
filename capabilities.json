@@ -70,6 +70,86 @@
           "description": "Maximal number of data points to predict", 
           "type": { "numeric": true } 
           },
+        "targetSeason1": {
+              "displayName": "Seasonal factor #1",
+              "description": "Specify, if time series is influenced by known seasonal factors. Non compatible seasonality will be ignored",
+              "type": {
+                "enumeration": [
+                  {
+                    "displayName": "none",
+                    "value": "none"
+                  },
+                   {
+                    "displayName": "manual",
+                    "value": "manual"
+                  },
+                  {
+                    "displayName": "hour",
+                    "value": "hour"
+                  },
+                  {
+                    "displayName": "day",
+                    "value": "day"
+                  },
+                  {
+                    "displayName": "week",
+                    "value": "week"
+                  },
+                  {
+                    "displayName": "month",
+                    "value": "month"
+                  },
+                  {
+                    "displayName": "quarter",
+                    "value": "quarter"
+                  }, 
+                  {
+                    "displayName": "year",
+                    "value": "year"
+                  }
+                ]
+              }
+            },
+            "targetSeason2": {
+              "displayName": "Seasonal factor #2",
+              "description": "Specify, if time series is influenced by known seasonal factors. Non compatible seasonality will be ignored",
+              "type": {
+                "enumeration": [
+                  {
+                    "displayName": "none",
+                    "value": "none"
+                  },
+                   {
+                    "displayName": "manual",
+                    "value": "manual"
+                  },
+                  {
+                    "displayName": "hour",
+                    "value": "hour"
+                  },
+                  {
+                    "displayName": "day",
+                    "value": "day"
+                  },
+                  {
+                    "displayName": "week",
+                    "value": "week"
+                  },
+                  {
+                    "displayName": "month",
+                    "value": "month"
+                  },
+                  {
+                    "displayName": "quarter",
+                    "value": "quarter"
+                  }, 
+                  {
+                    "displayName": "year",
+                    "value": "year"
+                  }
+                ]
+              }
+            },
           "freq1": { 
           "displayName": "Seasonal period #1",
           "description": "Number of data points in smaller season period. For example, for time series with 15 minutes interval and daily seasonality the value is 96.", 

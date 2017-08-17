@@ -60,6 +60,8 @@ module powerbi.extensibility.visual {
         forecastLength: number;
         freq1: number;
         freq2: number;
+        targetSeason1: string;
+        targetSeason2: string;
     }
 
     interface VisualSettingsConfParams {
@@ -124,7 +126,9 @@ module powerbi.extensibility.visual {
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
                 forecastLength: 500,
                 freq1: 1,
-                freq2: 1
+                freq2: 1,
+                targetSeason1: "none",
+                targetSeason2: "none"
             };
 
             this.settings_conf_params = <VisualSettingsConfParams>{
@@ -266,7 +270,9 @@ module powerbi.extensibility.visual {
             this.settings_forecastPlot_params = <VisualSettingsForecastPlotParams>{
                 forecastLength: getValue<number>(objects, 'settings_forecastPlot_params', 'forecastLength', 500),
                 freq1: getValue<number>(objects, 'settings_forecastPlot_params', 'freq1', 1),
-                freq2: getValue<number>(objects, 'settings_forecastPlot_params', 'freq2', 1)
+                freq2: getValue<number>(objects, 'settings_forecastPlot_params', 'freq2', 1),
+                targetSeason1: getValue<string>(objects, 'settings_forecastPlot_params', 'targetSeason1',"none"),
+                targetSeason2: getValue<string>(objects, 'settings_forecastPlot_params', 'targetSeason2',"none")
             };
 
            this.settings_conf_params = <VisualSettingsConfParams>{
@@ -334,11 +340,32 @@ module powerbi.extensibility.visual {
                         objectName: objectName,
                         properties: {
                             forecastLength: Math.round(inMinMax(this.settings_forecastPlot_params.forecastLength, 1, 1000000)),
-                            freq1: Math.round(inMinMax(this.settings_forecastPlot_params.freq1, 1, 1000000)),
+                            targetSeason1: this.settings_forecastPlot_params.targetSeason1,
+                            targetSeason2: this.settings_forecastPlot_params.targetSeason2
+                        },
+                        selector: null
+                    });
+
+                    if(this.settings_forecastPlot_params.targetSeason1 === "manual")
+                    {
+                     objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
+                            freq1: Math.round(inMinMax(this.settings_forecastPlot_params.freq1, 1, 1000000))
+                        },
+                        selector: null
+                    });
+                    }
+                if(this.settings_forecastPlot_params.targetSeason2 === "manual")
+                    {
+                    objectEnumeration.push({
+                        objectName: objectName,
+                        properties: {
                             freq2: Math.round(inMinMax(this.settings_forecastPlot_params.freq2, 1, 1000000))
                         },
                         selector: null
                     });
+                    }
                     break;
 
                 case 'settings_conf_params':
