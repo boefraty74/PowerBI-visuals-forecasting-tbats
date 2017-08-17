@@ -13,27 +13,27 @@
 #
 # WARNINGS:   
 #
-# CREATION DATE: 06/06/2017
+# CREATION DATE: 06/01/2017
 #
-# LAST UPDATE: 06/06/2017
+# LAST UPDATE: 08/12/2017
 #
 # VERSION: 1.0.0
 #
-# R VERSION TESTED: 3.3.4, MRO 3.3.2
+# R VERSION TESTED: 3.4.0, 3.3.4, MRO 3.2.2
 # 
 # AUTHOR: pbicvsupport@microsoft.com
 #
 # REFERENCES: https://robjhyndman.com/papers/ComplexSeasonality.pdf
 
 
-fileRda = "C:/Users/boefraty/projects/PBI/R/tempData.Rda"
-if(file.exists(dirname(fileRda)))
-{
-  if(Sys.getenv("RSTUDIO")!="")
-    load(file= fileRda)
-  else
-    save(list = ls(all.names = TRUE), file=fileRda)
-}
+# fileRda = "C:/Users/boefraty/projects/PBI/R/tempData.Rda"
+# if(file.exists(dirname(fileRda)))
+# {
+#   if(Sys.getenv("RSTUDIO")!="")
+#     load(file= fileRda)
+#   else
+#     save(list = ls(all.names = TRUE), file=fileRda)
+# }
 
 
 Sys.setlocale("LC_ALL","English") # Internationalization 
@@ -41,28 +41,21 @@ Sys.setlocale("LC_ALL","English") # Internationalization
 ############ User Parameters #########
 
 
+whichInfo = "none"
+if(exists("settings_info_params_whichInfo"))
+  whichInfo = settings_info_params_whichInfo
+
 ##PBI_PARAM: Show cumulative value inside shown period (actual + predicted)?
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoCumSum = FALSE
-# if(exists("settings_info_params_showInfoCumSum"))
-#   showInfoCumSum = settings_info_params_showInfoCumSum
 
 ##PBI_PARAM: Show TBATS method selected
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoMethodTBATS = FALSE
-# if(exists("settings_info_params_showInfoMethodTBATS"))
-#   showInfoMethodTBATS = settings_info_params_showInfoMethodTBATS
-
 
 ##PBI_PARAM: Show information criterion of the found model
 #Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
 showInfoCriterion = FALSE
-# if(exists("settings_info_params_showInfoCriterion"))
-#   showInfoCriterion = settings_info_params_showInfoCriterion
-
-whichInfo = "none"
-if(exists("settings_info_params_whichInfo"))
-  whichInfo = settings_info_params_whichInfo
 
 if(whichInfo == "AIC")
 {
@@ -85,6 +78,22 @@ if(exists("settings_forecastPlot_params_forecastLength"))
   if(is.na(forecastLength))
     forecastLength = 10
   forecastLength = round(max(min(forecastLength,1e+6),1))
+}
+
+##PBI_PARAM: Seasonal factor #1
+#Type:enum, Default:"none", Range:NA, PossibleValues:none,manual, hour, day,...,year 
+targetSeason1 = "none"
+if(exists("settings_forecastPlot_params_targetSeason1"))
+{
+  targetSeason1 = settings_forecastPlot_params_targetSeason1
+}
+
+##PBI_PARAM: Seasonal factor #2
+#Type:enum, Default:"none", Range:NA, PossibleValues:none,manual, hour, day,...,year 
+targetSeason2 = "none"
+if(exists("settings_forecastPlot_params_targetSeason2"))
+{
+  targetSeason2 = settings_forecastPlot_params_targetSeason2
 }
 
 ##PBI_PARAM: Number of data points in smaller season period
@@ -120,7 +129,7 @@ if (exists("settings_conf_params_confInterval1"))
 }
 
 ##PBI_PARAM: Confidence level
-#Type:number, Default:0.5, Range:[0,1], PossibleValues:NA, 
+#Type:number, Default:0.995, Range:[0,1], PossibleValues:NA, 
 confInterval2 = 0.995
 if (exists("settings_conf_params_confInterval2")) 
 { 
@@ -128,7 +137,7 @@ if (exists("settings_conf_params_confInterval2"))
   if(is.na(confInterval2))
     confInterval1 = 0.995
 }
-
+#swap if required
 if(confInterval1>confInterval2)
 {
   temp = confInterval2
@@ -140,18 +149,15 @@ lowerConfInterval = confInterval1
 upperConfInterval = confInterval2
 
 
-
 ##PBI_PARAM: Show period
 #Type:string, Default:"all", Range:NA, PossibleValues:('all','hour','mday','week','mon','year') 
-showFromTo = "all"# 
+showFromTo = "all" 
 if(exists("settings_graph_params_showFromTo"))
   showFromTo = settings_graph_params_showFromTo
 
 possibleFromTo = c('all','hour','mday','week','mon','year')
-
 if(!(showFromTo %in% possibleFromTo))
   showFromTo = possibleFromTo[1]
-
 
 
 ##PBI_PARAM: Shift period (for example 24 to start week at monday)
@@ -208,12 +214,6 @@ sizeLabel = 12
 if(exists("settings_axes_params_textSize"))
   sizeLabel = as.numeric(settings_axes_params_textSize)
 
-###############Internal parameters definitions#################
-
-#PBI_PARAM Minimal number of points
-#Type:integer, Default:15, Range:[5,50], PossibleValues:NA, Remarks: NA
-minPoints = 15
-
 ##PBI_PARAM Color of time series line
 #Type:string, Default:"orange", Range:NA, PossibleValues:"orange","blue","green","black"
 pointsCol = "orange"
@@ -236,12 +236,6 @@ if(exists("settings_graph_params_fittedCol"))
 transparency = 1
 if(exists("settings_graph_params_percentile"))
   transparency = as.numeric(settings_graph_params_percentile)/100
-
-#PBI_PARAM Shaded band for confidence interval
-#Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
-fillConfidenceLevels=TRUE
-
-
 
 #PBI_PARAM Size of points on the plot
 #Type:numeric, Default: 1 , Range:[0.1,5], PossibleValues:NA, Remarks: NA
@@ -266,82 +260,70 @@ infoTextCol = "gray50"
 if(exists("settings_info_params_infoTextCol"))
   infoTextCol = settings_info_params_infoTextCol
 
+###############Internal parameters definitions#################
+
+#PBI_PARAM Minimal number of points
+#Type:integer, Default:15, Range:[5,50], PossibleValues:NA, Remarks: NA
+minPoints = 15
+
+
+#PBI_PARAM Shaded band for confidence interval
+#Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
+fillConfidenceLevels=TRUE
+
+
 
 #PBI_PARAM Size of warnings font
 #Type:numeric , Default:cexSub*12, Range:NA, PossibleValues:[1,50], Remarks: NA
-sizeWarn = cexSub*12
+sizeWarn = cexSub * 12
 
 #PBI_PARAM Size of ticks on axes 
+#Type:numeric , Default:8, Range:NA, PossibleValues:[1,50], Remarks: NA
 sizeTicks = 8
-
 
 ##PBI_PARAM: Should warnings text be displayed?
 #Type:logical, Default:TRUE, Range:NA, PossibleValues:NA, Remarks: NA
 showWarnings = TRUE
 
-showInfo=any(c(showInfoCumSum,showInfoCriterion, showInfoMethodTBATS))
-
-useParallel = useParProc
-if(useParProc)
-  if(getwd() == "C:/") # in service
-    useParallel = FALSE
-
-
-#PBI_PARAM Size of warnings font
-#Type:numeric , Default:cexSub*10, Range:NA, PossibleValues:[1,50], Remarks: NA
-#sizeWarn = cexSub*8
-
 #PBI_PARAM opacity of conf interval color
 transparencyConfInterval = 0.3 
 
-##PBI_PARAM: Should warnings text be displayed?
-#Type:logical, Default:FALSE, Range:NA, PossibleValues:NA, Remarks: NA
-#showWarnings = FALSE #changed in 1.0.2 (HTML-based) to be FALSE by default 
-
-
-
 ###############Library Declarations###############
+###############Internal functions definitions#################
 
 source('./r_files/utils.r')
 source('./r_files/flatten_HTML.r')
 libraryRequireInstall("plotly")
 
-###############Internal functions definitions#################
-
-
-
-
-
 ###############Upfront input correctness validations (where possible)#################
 
 pbiWarning = NULL
-
-
+useParallel = useParProc
+showInfo = any(c(showInfoCumSum, showInfoCriterion, showInfoMethodTBATS))
 
 if(!exists("Date") || !exists("Value"))
 {
   dataset=data.frame()
   pbiWarning  = cutStr2Show("Both 'Date' and 'Value' fields are required.", strCex = 0.85)
-  timeSeries=ts()
-  showWarnings=TRUE
+  timeSeries = ts()
+  showWarnings = TRUE
 }else{
-  dataset= cbind(Date,Value)
-  dataset<-dataset[complete.cases(dataset),] #remove corrupted rows
+  dataset = cbind(Date,Value)
+  dataset <- dataset[complete.cases(dataset),] #remove corrupted rows
   labTime = "Time"
-  labValue=names(dataset)[ncol(dataset)]
+  labValue = names(dataset)[ncol(dataset)]
   
   dataset[,2] = as.numeric(dataset[,2])
-  N=nrow(dataset)
+  N = nrow(dataset)
   
-  if(N==0 && exists("Date") && nrow(Date)>0 &&  exists("Value")){
+  if(N == 0 && exists("Date") && nrow(Date) > 0 &&  exists("Value")){
     pbiWarning1  = cutStr2Show("Wrong date type. Only 'Date', 'Time', 'Date/Time' are allowed without hierarchy", strCex = 0.85)
     pbiWarning = paste(pbiWarning1, pbiWarning, sep ="\n")
-    timeSeries=ts()
-    showWarnings=TRUE
+    timeSeries = ts()
+    showWarnings = TRUE
   }else {
-    
     dataset = dataset[order(dataset[,1]),]
-    parsed_dates=strptime(dataset[,1],"%Y-%m-%dT%H:%M:%S",tz="UTC")
+    parsed_dates = strptime(dataset[,1], "%Y-%m-%dT%H:%M:%S", tz="UTC")
     labTime = names(Date)[1]
     
     if((any(is.na(parsed_dates))))
@@ -354,20 +336,23 @@ if(!exists("Date") || !exists("Value"))
     }
     else
     {
-      
       interval = difftime(parsed_dates[length(parsed_dates)],parsed_dates[1])/(length(parsed_dates)-1) # force equal spacing 
-      myFreq = findFreq(parsed_dates, targetS = 1)
-      timeSeries=ts(data = dataset[,2], start=1, frequency = round(myFreq))
+      myFreq1 = getFrequency1(parsed_dates = parsed_dates, values = dataset[,2],
+                              tS = targetSeason1, f = freq1)
+      myFreq2 = getFrequency1(parsed_dates = parsed_dates, values = dataset[,2],
+                              tS = targetSeason2, f = freq2)
+      timeSeries=ts(data = dataset[,2], start=1, frequency = round(myFreq1))
     }
   }
 }
+
 ##############Main Visualization script###########
 
 pbiInfo = NULL
 
-gooodpd = goodPlotDimension(3.5,3)
+gooodpd = goodPlotDimension(3.25, 2.5)
 
-if(length(timeSeries)>=minPoints && gooodpd) {
+if(length(timeSeries) >= minPoints && gooodpd) {
   
   # compute part of dates to show
   actTimes = as.POSIXlt(seq(from=parsed_dates[1], to = parsed_dates[length(parsed_dates)], length.out = length(parsed_dates)))
@@ -384,68 +369,64 @@ if(length(timeSeries)>=minPoints && gooodpd) {
     myForecastLength = min(forecastLength,myForecastLength) 
   }
   
+  freqs = joinFreq(myFreq1, myFreq2)
+  timeSeries = msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude ) / max(freqs) )#
   
-  freqs = joinFreq(freq1,freq2)
-  timeSeries = msts(dataset[,2], seasonal.periods=freqs, start= (-N+myInclude )/max(freqs) )#
-  
-  if(algModeFast)
+  if(algModeFast)# mode with preselected parameters
     fit <- tbats(timeSeries, use.box.cox = FALSE, use.trend = FALSE, use.damped.trend = FALSE,
                  use.arma.errors = FALSE, max.p= 2, max.q = 2,
                  max.P = 1, max.Q = 1, max.order= 3, max.d = 1, max.D = 0, use.parallel = useParallel )
   else
     fit <- tbats(timeSeries, use.parallel = useParallel) 
   
-  #TODO: add user mode with all tbats params 
+  #TODO: add user mode with all tbats params from GUI
   
-  
-  if(lowerConfInterval==0)
+  if(lowerConfInterval == 0)
     lowerConfInterval = NULL; 
   
   if (is.null(forecastLength))
-    prediction = forecast(fit, level=c(lowerConfInterval,upperConfInterval))
+    prediction = forecast(fit, level=c(lowerConfInterval, upperConfInterval))
   else
-    prediction = forecast(fit, level=c(lowerConfInterval,upperConfInterval), h=myForecastLength)
+    prediction = forecast(fit, level=c(lowerConfInterval, upperConfInterval), h = myForecastLength)
   
   if(valuesNonNegative)
   {
     prediction$mean[prediction$mean < 0] = 0
-    prediction$upper[prediction$upper<0] = 0
-    prediction$lower[prediction$lower<0] = 0
-    prediction$fitted[prediction$fitted<0] = 0
+    prediction$upper[prediction$upper < 0] = 0
+    prediction$lower[prediction$lower < 0] = 0
+    prediction$fitted[prediction$fitted < 0] = 0
   }
   
   inI = seq(from = fFromTo[1],length.out = myInclude)
   
   #calculate cumulative forecast
-  tempVal = sum(dataset[inI,2])
+  tempVal = sum(dataset[inI, 2])
   if(is.na(tempVal))
     tempVal = 0
   myCumSum = sum(prediction$mean) + tempVal
   
   
   if(showInfo && showInfoMethodTBATS)
-    pbiInfo=paste(pbiInfo,"", prediction$method, "",sep="")
+    pbiInfo=paste(pbiInfo,"", prediction$method, "", sep="")
   
   if(showInfoCumSum)
     pbiInfo=paste(pbiInfo, "Cumulative forecast: ", format(myCumSum, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","),"", sep="")
   
   if(showInfoCriterion)
-    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark       = ","), "", sep="")
+    pbiInfo=paste(pbiInfo, "AIC: ", format(fit$AIC, digits=4, nsmall = numDigitsInfo, scientific = F,  big.mark   = ","), "", sep="")
+  
+  pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE, maxChar = 5, partAvailable = 0.9)
   
   #axes labels
-  labTimeShort = cutStr2Show(labTime, strCex = sizeLabel/6, isH = TRUE, partAvailable = 0.8)
-  labValueShort = cutStr2Show(labValue, strCex = sizeLabel/6, isH = FALSE, partAvailable = 0.75)
-  
-  
-  pbiInfo = cutStr2Show(pbiInfo,strCex = cexSub,isH = TRUE,maxChar = 5, partAvailable = 0.9)
+  labTimeShort = cutStr2Show(labTime, strCex = sizeLabel / 6, isH = TRUE, partAvailable = 0.8)
+  labValueShort = cutStr2Show(labValue, strCex = sizeLabel / 6, isH = FALSE, partAvailable = 0.75)
   
   NpF = myInclude + myForecastLength
   
   par(mar = c(5+showInfo,6 + (1 - showScientificY) , 1, 2))
   
-  
   #format  x_with_f
-  numTicks = FindTicksNum(NpF,max(freqs)) # find based on plot size
+  numTicks = FindTicksNum1(NpF, max(freqs)) # find based on plot size
   numTicks = min(numTicks, NpF)
   
   fromDate = allTimes[fFromTo[1]]
@@ -455,19 +436,13 @@ if(length(timeSeries)>=minPoints && gooodpd) {
   iii = unique(round(seq(from = 1, to = length(x_with_f_exist), length.out = numTicks)))
   x_with_f = x_with_f_exist[iii]
   
-  if(userFormatX=="auto")
+  if(userFormatX == "auto")
     userFormatX = NULL;
   
   x_with_forcast_formatted = flexFormat(dates = x_with_f, orig_dates = parsed_dates, freq = max(freqs), myformat = userFormatX)
   
-  
-  
-  lastValue = tail(prediction$x,1)
-  
   #format  
-  
   f_full = as.POSIXlt(seq(from=tail(parsed_dates,1), to = (tail(parsed_dates,1)+interval*(forecastLength)), length.out = forecastLength+1))
-  
   
   #historical data
   x1 = seq(0,length.out = length(prediction$x[inI]))
@@ -480,13 +455,13 @@ if(length(timeSeries)>=minPoints && gooodpd) {
   #fitted data 
   y3 = as.numeric(prediction$fitted[inI])
   
+  # ggplot construction  
+  p1a <- ggplot(data = NULL,aes(x = x1, y = y1) )
   
-  p1a<-ggplot(data=NULL,aes(x=x1,y=y1) )
-  
-  if(sum(!is.na(y1))>1)
-    p1a<-p1a+geom_line(col=alpha(pointsCol,transparency), lwd = pointCex)
+  if(sum(!is.na(y1)) > 1)
+    p1a<-p1a+geom_line(col = alpha(pointsCol, transparency), lwd = pointCex)
   else
-    p1a<-p1a+geom_point(col=alpha(pointsCol,transparency), size = pointCex)
+    p1a<-p1a+geom_point(col = alpha(pointsCol, transparency), size = pointCex)
   
   if(showInPlotFitted)
   {
@@ -495,6 +470,7 @@ if(length(timeSeries)>=minPoints && gooodpd) {
     else
       p1a <- p1a + geom_point(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x1, y = y3), col=alpha(fittedCol,transparency), size = pointCex)
   }
+  
   if(length(y2)>1)
     p1a <- p1a + geom_line(inherit.aes = FALSE ,data = NULL, mapping = aes(x = x2, y = y2), col=alpha(forecastCol,transparency), lwd = pointCex)
   else
@@ -506,10 +482,7 @@ if(length(timeSeries)>=minPoints && gooodpd) {
     lower2 = lower1 = as.numeric(prediction$lower[,1])
     upper2 = upper1 = as.numeric(prediction$upper[,1])
     id = x2
-    
-    #names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id   
     cf_full = as.character(f_full)
-    
     p1a <- p1a + geom_ribbon( inherit.aes = FALSE , mapping = aes(x = id, ymin = lower1 , ymax = upper1), fill = "blue4", alpha = 0.25)
   }
   
@@ -523,26 +496,20 @@ if(length(timeSeries)>=minPoints && gooodpd) {
     else
     {  
       lower1 = lower2 = as.numeric(prediction$lower[,1])
-      upper1 =upper2 = as.numeric(prediction$upper[,1])
+      upper1 = upper2 = as.numeric(prediction$upper[,1])
     } 
     
     id = x2
-    
     names(lower2) = names(upper2) = names(lower1) = names(upper1)=  names(f_full) = id 
     cf_full = as.character(f_full)
-    
     p1a <- p1a + geom_ribbon( inherit.aes = FALSE , mapping = aes(x = id, ymin = lower2, ymax = upper2), fill = "gray50", alpha = 0.25)
   }
   
   #design 
   p1a <- p1a + labs (title = pbiInfo, caption = NULL) + theme_bw() 
   p1a <- p1a + xlab(labTimeShort) + ylab(labValueShort) 
-  
-  #p1a <- p1a + scale_x_continuous(breaks = seq(1,length(prediction$x[fFromTo[1]:N]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
   p1a <- p1a + scale_x_continuous(breaks = seq(0,length(prediction$x[inI]) + length(prediction$mean)-1, length.out = numTicks), labels = x_with_forcast_formatted) 
-  
-  
-  p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels(x_with_forcast_formatted), 
+  p1a <- p1a +  theme(axis.text.x  = element_text(angle = getAngleXlabels1(x_with_forcast_formatted), 
                                                   hjust=1, size = sizeTicks, colour = "gray60"),
                       axis.text.y  = element_text(vjust = 0.5, size = sizeTicks, colour = "gray60"),
                       plot.title  = element_text(hjust = 0.5, size = sizeWarn, colour = infoTextCol), 
@@ -550,21 +517,20 @@ if(length(timeSeries)>=minPoints && gooodpd) {
                       axis.text=element_text(size =  sizeTicks,  colour = labelsTextCol),
                       panel.border = element_blank())
   
-  
 } else{ #empty plot
   
   #empty plot
   showWarnings = TRUE
   if(gooodpd)
-    pbiWarning1  = cutStr2Show("Not enough data points", strCex = sizeWarn/6, partAvailable = 0.85)
+    pbiWarning1  = cutStr2Show("Not enough data points", strCex = sizeWarn / 6, partAvailable = 0.85)
   else
   {
     pbiWarning1 = "Visual is "
-    pbiWarning1 = cutStr2Show(pbiWarning1, strCex = sizeWarn/6, partAvailable = 0.9)
+    pbiWarning1 = cutStr2Show(pbiWarning1, strCex = sizeWarn / 6, partAvailable = 0.9)
     pbiWarning2 = "too small "
-    pbiWarning2 = cutStr2Show(pbiWarning2, strCex = sizeWarn/6, partAvailable = 0.9)
+    pbiWarning2 = cutStr2Show(pbiWarning2, strCex = sizeWarn / 6, partAvailable = 0.9)
     pbiWarning1 <- paste(pbiWarning1, "<br>", pbiWarning2, sep="")
-    sizeWarn = 8 #smaller
+    sizeWarn = 7 #smaller
   }
   pbiWarning<-paste(pbiWarning, pbiWarning1 , sep="<br>")
   
@@ -574,8 +540,8 @@ if(showWarnings && !is.null(pbiWarning))
 {
   p1a = ggplot() + labs (title = pbiWarning, caption = NULL) + theme_bw() +
     theme(plot.title  = element_text(hjust = 0.5, size = sizeWarn), 
-          axis.title=element_text(size =  sizeLabel),
-          axis.text=element_text(size =  sizeTicks),
+          axis.title = element_text(size =  sizeLabel),
+          axis.text = element_text(size =  sizeTicks),
           panel.border = element_blank())
 }
 ggp <- plotly_build(p1a)
@@ -617,20 +583,20 @@ if(!(showWarnings && !is.null(pbiWarning)))
   }
   
   if(indHistData)
-  ggp$x$data[[indHistData]]$text = paste("Historical data:<br>", labTime, ": ", allTimes[fFromTo[1]:N], "<br>", labValue, ": ", round(y1,2) , sep ="" ) 
+    ggp$x$data[[indHistData]]$text = paste("Historical data:<br>", labTime, ": ", allTimes[fFromTo[1]:N], "<br>", labValue, ": ", round(y1,2) , sep ="" ) 
   
   if(indForcData)
-  ggp$x$data[[indForcData]]$text = paste("Forecast data:<br>",labTime, ": ", allTimes[(N+1):fFromTo[2]], "<br>", labValue, ": ", round(y2,2) , sep ="" ) 
+    ggp$x$data[[indForcData]]$text = paste("Forecast data:<br>",labTime, ": ", allTimes[(N+1):fFromTo[2]], "<br>", labValue, ": ", round(y2,2) , sep ="" ) 
   
- 
+  
   if(indFitted)
     ggp$x$data[[indFitted]]$text = paste("Fitted data:<br>",labTime, ": ", allTimes[fFromTo[1]:N], "<br>", labValue, ": ", round(y3,2) , sep ="" ) 
   
   
-   if(length(ggp$x$data)>=indLow && indLow)
+  if(length(ggp$x$data)>=indLow && indLow)
   {
     iii =  as.character(ggp$x$data[[indLow]]$x)
-    ddd = as.character(allTimes[(N+1):fFromTo[2]])
+    ddd = as.character(allTimes[(N + 1) : fFromTo[2]])
     names(ddd) = as.character(x2)
     ddd1 = ddd[iii]
     ggp$x$data[[indLow]]$text = paste("Conf. interval1:<br>", labTime, ": ", ddd1, "<br> lower: ", lower1[iii],"<br> upper: ", upper1[iii], sep ="" ) 
@@ -640,9 +606,9 @@ if(!(showWarnings && !is.null(pbiWarning)))
   {
     iii =  as.character(ggp$x$data[[indHigh]]$x)
     ddd = as.character(allTimes[(N+1):fFromTo[2]])
-   names(ddd) = as.character(x2)
-   ddd1 = ddd[iii]
-   ggp$x$data[[indHigh]]$text = paste("Conf. interval2:<br>", labTime, ": ", ddd1, "<br> lower: ", lower2[iii],"<br> upper: ", upper2[iii], sep ="" ) 
+    names(ddd) = as.character(x2)
+    ddd1 = ddd[iii]
+    ggp$x$data[[indHigh]]$text = paste("Conf. interval2:<br>", labTime, ": ", ddd1, "<br> lower: ", lower2[iii],"<br> upper: ", upper2[iii], sep ="" ) 
   }
   
   ggp$x$layout$margin$l = ggp$x$layout$margin$l+10
@@ -660,12 +626,14 @@ disabledButtonsList <- list('toImage', 'sendDataToCloud', 'zoom2d', 'pan', 'pan2
 p$x$config$modeBarButtonsToRemove = disabledButtonsList
 
 p <- config(p, staticPlot = FALSE, editable = FALSE, sendData = FALSE, showLink = FALSE,
-            displaylogo = FALSE,  collaborate = FALSE, cloud=FALSE)
+            displaylogo = FALSE,  collaborate = FALSE, cloud=FALSE, sizingPolicy = htmlwidgets::sizingPolicy(
+              browser.padding = 0
+            ))
 
 internalSaveWidget(p, 'out.html')
 
 ####################################################
-#display in R studio
-if(Sys.getenv("RSTUDIO")!="")
-   print(p)
+# #display in R studio
+# if(Sys.getenv("RSTUDIO")!="")
+#   print(p)
 

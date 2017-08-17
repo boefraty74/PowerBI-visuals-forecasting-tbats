@@ -12,6 +12,11 @@ internalSaveWidget <- function(widget, fname)
 {
   tempFname = paste(fname, ".tmp", sep="")
   htmlwidgets::saveWidget(widget, file = tempFname, selfcontained = FALSE)
+  
+  wordA = '"padding":40'
+  wordB = '"padding":0'
+  ReplaceStrInFile(tempFname,tempFname, wordA , wordB)
+ 
   FlattenHTML(tempFname, fname)
 }
 
@@ -115,5 +120,14 @@ FindSrcReplacement <- function(str)
   str = paste('https://cdn.plot.ly/plotly-', verstr,'.min.js', sep='')
   return(str)
 }
+
+ReplaceStrInFile <- function(filenameA,filenameB,wordA,wordB)
+{
+  tx  <- readLines(filenameA)
+  tx2  <- gsub(pattern = wordA, replace = wordB, x = tx)
+  writeLines(tx2, con=filenameB)
+
+}
+
 #################################################
 
